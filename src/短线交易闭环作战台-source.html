@@ -1432,15 +1432,17 @@
     const hit = String(STAGE_POSITION[stage] || '').match(/(\d+)-(\d+)成/);
     return hit ? Number(hit[2]) : null;
   }
+  const QUOTE_MARKET_OF_SUFFIX = { SH: 'USHA', SZ: 'USZA', BJ: 'USTA' };
   function guessMarket(code) {
-    if (/^(6|9)/.test(code)) return 'SH';
-    if (/^(0|2|3)/.test(code)) return 'SZ';
-    if (/^(4|8)/.test(code)) return 'BJ';
+    if (/^(6|9)/.test(code)) return 'USHA';
+    if (/^(0|2|3)/.test(code)) return 'USZA';
+    if (/^(4|8)/.test(code)) return 'USTA';
     return '';
   }
   function marketOfThscode(thscode) {
     const parts = String(thscode || '').split('.');
-    return { code: parts[0], market: marketSuffix(parts[1]) || guessMarket(parts[0]) };
+    const suffix = marketSuffix(parts[1]);
+    return { code: parts[0], market: QUOTE_MARKET_OF_SUFFIX[suffix] || guessMarket(parts[0]) };
   }
   function rangeText(item) {
     if (item.low == null && item.high == null) return '--';
@@ -3132,10 +3134,7 @@
     const prev = state.history[index + 1];
     if (!prev || !prev.items || !prev.items.length) return;
     const identities = prev.items.slice(0, 40).filter(item => item.thscode)
-      .map(item => {
-        const parts = String(item.thscode).split('.');
-        return { market: parts[1] === 'SZ' ? 'SZ' : 'SH', code: parts[0] };
-      });
+      .map(item => marketOfThscode(item.thscode));
     if (!identities.length) return;
     await new Promise(resolve => {
       const session = client.createQuoteSession(sessionArgs('prev-limit-performance', identities, dataset => {
