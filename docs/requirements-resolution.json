@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "requirementRef": "用户消息：《短线交易闭环作战台》_中0920-6.html 页面需求",
+  "issues": [
+    {
+      "id": "external-indicator-scope",
+      "question": "模块一「外盘→A股映射」中，美股三大指数、恒生指数已有稳定来源；但恒生指数期货、富时A50期货、美元兑人民币、10年期美债收益率、原油、黄金、铜这 7 项在当前能力下没有已封装的稳定行情入口，需要页面内自行检索全球标的并取实时报价，跨市场/期货行情能否返回取决于宿主实测。你希望怎么处理？",
+      "reason": "scope-conflict",
+      "affects": ["req-m1-external"],
+      "status": "resolved-by-user",
+      "investigation": [
+        {
+          "source": "页面宿主能力目录（lumi-data-capabilities capability-catalog 与 market-overview 合同）核对",
+          "finding": "market-overview 支持 ashare/hkshare/usshare 三个市场并可按 includeHotIndex 返回市场指数列表（含涨跌幅），可稳定覆盖纳斯达克、标普500、道琼斯与恒生指数；能力目录中没有全球期货、外汇、美债收益率的已封装行情入口。"
+        },
+        {
+          "source": "原生行情组合能力（lumi/native-data-client 与 page-invocation 边界）核对",
+          "finding": "原生检索支持 assetPolicy='all-registered' 与 'commodity-futures'，可对全球标的做候选检索并由行情会话取快照；但跨市场、期货、外汇的实时字段覆盖与宿主可用性没有已发布证据，属于待宿主实测的不确定范围。"
+        }
+      ],
+      "options": [
+        {
+          "id": "full-hide-missing",
+          "label": "全量接入，缺项自动隐藏",
+          "impact": "11 项全部按真实数据链路实现；宿主无法返回的对象不显示、不留占位，映射规则仍按已取得的对象生效。"
+        },
+        {
+          "id": "core-only",
+          "label": "只保留有稳定来源的核心项",
+          "impact": "仅展示美股三大指数、恒生指数、中概股等可稳定取得的对象，其余不纳入页面与映射计算。"
+        },
+        {
+          "id": "keep-and-mark",
+          "label": "全部保留，取不到时标注区间外",
+          "impact": "11 项固定展示，取不到的对象标注为当前不可用且不参与映射结论计算。"
+        }
+      ],
+      "resolution": {
+        "decision": "11 项外部指标全部接入真实数据链路，宿主无法返回的对象自动隐藏、不留占位，映射规则按已取得对象生效",
+        "userReply": {
+          "ref": "user-message:question-answers-2026-09-21",
+          "text": "全量接入，缺项自动隐藏（推荐）",
+          "receipt": "evidence/answer-external-indicator-scope.json"
+        },
+        "selectedOptions": ["full-hide-missing"]
+      }
+    },
+    {
+      "id": "review-history-window",
+      "question": "模块四「环境对照分析」要把每笔交易标注当日情绪阶段，需要按交易日回看当天的涨停/跌停/炸板数据。交割单日期跨度大时请求量会明显上升，你希望覆盖到哪个范围？",
+      "reason": "scope-conflict",
+      "affects": ["req-m4-env"],
+      "status": "resolved-by-user",
+      "investigation": [
+        {
+          "source": "DataHub 涨跌停池能力合同与交易日历合同核对",
+          "finding": "涨停池、跌停池、炸板池三者均支持 date_ms 指定历史交易日，可逐日重建当日情绪分项；但每个交易日需要 3 次请求，交易日数量直接决定首次加载耗时。"
+        },
+        {
+          "source": "页面级数据审查（情绪走势图与复盘共用同一套历史分项）核对",
+          "finding": "情绪走势图本身已需要近 20 个交易日的历史分项；把复盘环境对照限制在同一窗口可复用同一份结果，避免交割单日期跨度大时请求量不可控。"
+        }
+      ],
+      "options": [
+        {
+          "id": "all-trade-dates",
+          "label": "覆盖交割单全部交易日",
+          "impact": "按交割单出现的每个交易日分别取当日情绪数据，日期多时首次加载明显变慢，但结论最完整。"
+        },
+        {
+          "id": "recent-20",
+          "label": "近 20 个交易日，更早标注区间外",
+          "impact": "只对最近 20 个交易日做情绪阶段对照，更早的交易标注为区间外且不计入胜率、盈亏比与亏损占比统计。"
+        },
+        {
+          "id": "on-demand",
+          "label": "页面按需加载",
+          "impact": "默认近 20 个交易日，用户点击某笔区间外交易时再单独补取当天情绪数据。"
+        }
+      ],
+      "resolution": {
+        "decision": "环境对照范围限定为最近 20 个交易日，更早的交易标注为区间外且不计入统计",
+        "userReply": {
+          "ref": "user-message:question-answers-2026-09-21",
+          "text": "近 20 个交易日，更早标注区间外（推荐）",
+          "receipt": "evidence/answer-review-history-window.json"
+        },
+        "selectedOptions": ["recent-20"]
+      }
+    }
+  ]
+}

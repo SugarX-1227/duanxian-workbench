@@ -1,0 +1,483 @@
+{
+  "schemaVersion": 1,
+  "requirementRef": "用户消息：《短线交易闭环作战台》_中0920-6.html 页面需求",
+  "originalText": "做一个页面叫“《短线交易闭环作战台》_中0920-6.html”\n\n【需求场景】\nA股短线交易者每天要在多个页面之间来回切换：盘前翻隔夜外盘，再凭经验判断影响哪些A股板块；盘中看到持仓或自选股突然异动，要花时间去查公告、新闻和板块联动才知道原因；情绪好坏全靠感觉；盘后复盘只看赚亏数字，不知道自己亏在哪里，同样的错误反复犯。信息分散、判断靠经验、复盘不落地，是短线交易最大的效率黑洞。\n\n【产品目标】\n用一个工作台串起“盘前定基调 → 盘中看原因 → 盘后照镜子 → 次日带着教训出发”的完整交易闭环，以“市场情绪周期”作为贯穿全天的统一主线，回答四个问题：\n1. 今天外部环境对A股哪些方向有利或不利？\n2. 当前市场情绪处在什么阶段，该进攻还是防守？\n3. 我的持仓和自选股为什么在异动，值不值得跟？\n4. 我在什么样的市场环境下最容易犯错？\n\n【页面结构】\n顶部固定一条“今日作战状态栏”，贯穿所有模块：当前情绪阶段（冰点/修复/发酵/高潮/分歧/退潮）、外盘整体方向、今日建议仓位区间，以及一条来自个人历史复盘的纪律提醒。\n下方用四个标签页组织内容，按交易时段自动默认打开对应模块：开盘前打开盘前映射，交易时段打开盘中异动，收盘后打开盘后复盘。\n\n模块一：外盘→A股映射（盘前）\n- 隔夜关键外部指标：纳斯达克、标普500、道琼斯、中概股指数、恒生指数期货、A50期货、美元兑人民币、10年期美债收益率、原油、黄金、铜。\n- 映射结果：把外盘变化映射到A股对应板块和产业链。例如英伟达、美股半导体对应算力和芯片链，铜价对应有色，原油对应油气和化工，中概股对应港股互联网和A股消费。每条映射给出方向（利好/利空）、强度、映射逻辑说明，以及A股对应的代表个股。\n- 首屏只突出“今天影响最大的3条映射”，其余折叠。\n- 映射规则支持用户自行增删改（例如新增“特斯拉→机器人板块”），规则保存后长期复用。\n\n模块二：短线情绪温度计\n- 核心指标：涨停家数、跌停家数、炸板率、连板最高高度、连板梯队分布、昨日涨停今日平均涨幅、连板晋级率、市场成交额。\n- 用一个仪表盘展示综合情绪分（0-100）和所处周期阶段，并给出判断依据。\n- 近20个交易日的情绪分走势图，标出每一次阶段切换。\n- 连板梯队表：按连板数分层，展示个股、所属题材和今日状态。\n\n模块三：异动归因解释器（盘中）\n- 监控范围：用户的持仓和自选股。\n- 异动触发条件：短时间快速拉升或下跌、放量突破、封板或炸板、偏离所属板块走势。阈值支持用户调整。\n- 每条异动卡片给出：异动时间、幅度、成交量变化，以及归因结论。归因分为个股消息驱动（公告、新闻、互动平台）、板块联动带动、大盘拖累、资金行为（大单、龙虎榜）等类别，并用一句话给出结论。\n- 结合当前情绪阶段给出“跟/观望/回避”的参考信号和理由。例如“高潮期的板块联动异动可跟，退潮期的独立拉升需警惕”。\n- 异动列表按时间倒序排列，新异动置顶高亮。\n\n模块四：交割单复盘与行为诊断（盘后）\n- 输入：支持上传券商导出的交割单（Excel/CSV），字段包括成交日期、时间、证券代码、名称、买卖方向、成交价、成交数量、成交金额。页面内置一份示例交割单，没有数据时也能完整体验所有功能。\n- 盈亏归因：把收益拆解为选股贡献、择时贡献、仓位贡献。\n- 行为偏差识别：追高买入、过早止盈、亏损后加仓摊平、频繁交易、持有过久不止损、情绪化报复性交易。每类偏差给出出现次数、造成的损失金额和典型交易案例。\n- 关键特色——环境对照分析：把每笔交易标注上当天的情绪阶段，统计用户在不同情绪阶段下的胜率、盈亏比和平均收益，得出类似“你在退潮期交易的胜率仅23%，占总亏损的61%”这样的结论。\n- 生成日报、周报和月报，并输出3条最重要的改进建议。\n- 诊断出的主要行为弱点，会自动同步到顶部“今日作战状态栏”，作为次日盘前的纪律提醒。\n\n【产品要求】\n- 首屏突出结论和最重要的变化，不把几十个指标等权平铺。每个模块最上方先给一句话结论，再展开明细。\n- 四个模块共享同一个日期上下文和同一套情绪阶段判断，保证数据前后一致。\n- 缺失的数据不显示，不出现“暂无数据”类占位噪音。\n- 映射规则、异动阈值、自选股列表、历史复盘结果都要保存下来，持续积累。\n- 颜色遵循A股习惯：红涨绿跌。\n- 页面风格专业、信息密度高但不杂乱，适配桌面端，同时在手机上可正常浏览。\n\n【主要交互】\n- 支持切换交易日，所有模块同步切换，可以回看历史任意一天的完整作战记录。\n- 点击映射结果中的板块，可下钻查看板块内个股表现。\n- 点击异动卡片，展开完整的归因依据和相关新闻公告原文链接。\n- 点击情绪走势图上的某一天，跳转到当天的连板梯队和情绪明细。\n- 在复盘模块中点击某类行为偏差，列出所有对应的交易明细。\n- 图表悬停展示精确数值。\n- 支持自选股的添加、删除和分组。",
+  "items": [
+    {
+      "id": "req-closed-loop",
+      "quote": "用一个工作台串起",
+      "kind": "content",
+      "datasetIds": [],
+      "acceptance": "页面把盘前映射、盘中异动、盘后复盘串成一条链：顶部状态栏在四个标签页中始终可见，且盘后诊断结果会回写状态栏。",
+      "status": "implemented",
+      "location": "顶部常驻 #bar + 四页签 #pane-pre/#pane-emotion/#pane-intraday/#pane-review；复盘结果 → syncDiscipline → #bar-discipline",
+      "reviewNote": "状态栏位于滚动容器之外的常驻头部，页签切换不重建；复盘诊断写入 localStorage 后由 syncDiscipline 渲染纪律提醒；未做浏览器验证。"
+    },
+    {
+      "id": "req-4questions",
+      "quote": "今天外部环境对A股哪些方向有利或不利？",
+      "kind": "content",
+      "datasetIds": [],
+      "acceptance": "四个模块各自在标题区先给出一句话结论，分别回答外部环境、情绪阶段、异动原因、易犯错环境。",
+      "status": "implemented",
+      "location": "#map-verdict / #emo-verdict / #ano-verdict / #rev-verdict",
+      "reviewNote": "四个 verdict 元素分别由 renderMap/renderEmotion/renderAnomalies/renderReview 计算并写入一句话结论；未做浏览器验证。"
+    },
+    {
+      "id": "req-topbar",
+      "quote": "当前情绪阶段（冰点/修复/发酵/高潮/分歧/退潮）、外盘整体方向、今日建议仓位区间，以及一条来自个人历史复盘的纪律提醒。",
+      "kind": "data",
+      "datasetIds": [
+        "emotionTrend",
+        "externalIndicators"
+      ],
+      "acceptance": "状态栏同时显示当前情绪阶段、外盘整体方向、建议仓位区间与纪律提醒四项；前三项随所选交易日刷新，纪律提醒来自本地复盘诊断结果。",
+      "status": "implemented",
+      "location": "#bar-stage/#bar-overseas/#bar-position/#bar-discipline（renderBar）",
+      "reviewNote": "binding：limit-up-pool/limit-down-pool/limit-break-pool 合成当日情绪分 → 阶段与仓位区间；market-overview(usshare/hkshare) + 全球标的实时行情 → 外盘方向；localStorage 复盘结果 → 纪律提醒；未在真实宿主验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-shell-tabs",
+      "quote": "下方用四个标签页组织内容，按交易时段自动默认打开对应模块",
+      "kind": "behavior",
+      "datasetIds": [],
+      "acceptance": "四个标签页可互相切换；首次打开时按本地时钟落在开盘前/交易中/收盘后分别默认打开盘前映射/盘中异动/盘后复盘，且用户手动切换后不再被覆盖。",
+      "status": "implemented",
+      "location": ".tab[data-pane] → activatePane；initPaneByClock",
+      "reviewNote": "initPaneByClock 依据本地时钟小时数选择默认页签，manualPane 标记后不再自动切换；点击页签重绘该页签区域；未做浏览器验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-m1-external",
+      "quote": "隔夜关键外部指标：纳斯达克、标普500、道琼斯、中概股指数、恒生指数期货、A50期货、美元兑人民币、10年期美债收益率、原油、黄金、铜。",
+      "kind": "data",
+      "datasetIds": [
+        "externalIndicators"
+      ],
+      "acceptance": "11 项外部指标逐项给出最新值、涨跌幅与方向；已取得真实报价的对象才显示。",
+      "status": "accepted-change",
+      "changeKind": "replace",
+      "revisedAcceptance": "11 项外部指标全部接入并逐项展示最新值与涨跌幅；美股三大指数与恒生指数使用市场全景能力，其余对象在页面内检索全球标的并取实时报价，宿主无法返回的对象不显示、不留占位。",
+      "decisionId": "external-indicator-scope",
+      "location": "#ext-grid（renderExternal）",
+      "reviewNote": "binding：market-overview(usshare/hkshare, includeHotIndex) + lumi/native-data-client(searchCandidates→createQuoteSession) 取 11 项；未取得报价的对象跳过渲染；未在真实宿主验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-m1-map",
+      "quote": "把外盘变化映射到A股对应板块和产业链",
+      "kind": "data",
+      "datasetIds": [
+        "boardMap"
+      ],
+      "acceptance": "每条映射给出方向（利好/利空）、强度、映射逻辑说明与 A股代表个股，代表个股带真实行情或明确不含行情。",
+      "status": "implemented",
+      "location": "#map-list（renderBoardMap）",
+      "reviewNote": "binding：本地映射规则 × 外部指标涨跌幅 → 方向/强度/逻辑；代表个股用 native 行情会话补现价与涨跌幅；板块用 ths-index-list 补板块涨跌幅；未在真实宿主验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-m1-top3",
+      "quote": "其余折叠。",
+      "kind": "visual",
+      "datasetIds": [
+        "boardMap"
+      ],
+      "acceptance": "首屏突出当天影响最大的 3 条映射（按强度排序），其余映射收在可展开的折叠区。",
+      "status": "implemented",
+      "location": "#map-top（3 条，默认展开）与 #map-rest（details 折叠）",
+      "reviewNote": "按强度降序取前 3 条渲染到 #map-top，其余渲染进 #map-rest 的 details；未做浏览器几何验证。"
+    },
+    {
+      "id": "req-m1-rules",
+      "quote": "映射规则支持用户自行增删改",
+      "kind": "behavior",
+      "datasetIds": [
+        "boardMap"
+      ],
+      "acceptance": "用户可新增、改写、删除映射规则（外部对象、A股板块、方向、强度权重、逻辑说明、代表个股），保存后立即生效并长期保留。",
+      "status": "implemented",
+      "location": "#rule-form/#rule-list（saveRules/loadRules/deleteRule）",
+      "reviewNote": "规则存于 localStorage 键 scs.mapping.rules，表单提交后重算映射并重绘；未做浏览器验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-m1-drill",
+      "quote": "点击映射结果中的板块，可下钻查看板块内个股表现。",
+      "kind": "behavior",
+      "datasetIds": [
+        "boardMap"
+      ],
+      "acceptance": "点击映射条目中的板块可展开该板块成分股及其涨跌幅/现价，可再次收起。",
+      "status": "implemented",
+      "location": ".map-card[data-board] → drillBoard → #map-drill",
+      "reviewNote": "drillBoard 用 ths-index-list 按名称匹配板块代码，再取 ths-index-constituents 与成分股行情渲染；未做浏览器交互验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-m2-core",
+      "quote": "涨停家数、跌停家数、炸板率、连板最高高度、连板梯队分布、昨日涨停今日平均涨幅、连板晋级率、市场成交额。",
+      "kind": "data",
+      "datasetIds": [
+        "emotionCore"
+      ],
+      "acceptance": "八项核心指标全部展示：涨停家数、跌停家数、炸板率、连板最高高度、连板梯队分布、昨日涨停今日平均涨幅、连板晋级率、市场成交额。",
+      "status": "implemented",
+      "location": "#emo-core（renderCore）",
+      "reviewNote": "binding：limit-up-pool.pagination.total/continue_day_cnt、limit-down-pool.pagination.total、limit-break-pool.pagination.total、index-prices-historical.turnover 合并序列、昨日涨停池 thscode → 行情会话算今日均涨幅；未在真实宿主验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-m2-score",
+      "quote": "用一个仪表盘展示综合情绪分（0-100）和所处周期阶段，并给出判断依据。",
+      "kind": "data",
+      "datasetIds": [
+        "emotionTrend"
+      ],
+      "acceptance": "仪表盘以 0-100 分显示综合情绪分，标注六阶段之一，并逐条列出参与计算的分项与实际取值。",
+      "status": "implemented",
+      "location": "#emo-gauge/#emo-stage/#emo-basis（renderEmotion）",
+      "reviewNote": "分项：涨停家数、涨停/跌停差、炸板率、连板高度、成交额环比、昨日涨停今日均涨幅，加权映射到 0-100；判断依据逐项列出真实取值；未在真实宿主验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-m2-trend",
+      "quote": "近20个交易日的情绪分走势图，标出每一次阶段切换。",
+      "kind": "data",
+      "datasetIds": [
+        "emotionTrend"
+      ],
+      "acceptance": "展示近 20 个交易日情绪分折线，阶段发生变化的日子带标记，悬停显示日期与精确分值。",
+      "status": "implemented",
+      "location": "#emo-chart（svgLine + data-tip + 阶段切换圆点）",
+      "reviewNote": "按交易日历前 20 个交易日逐日取涨停池/跌停池/炸板池条数与成交额计算历史情绪分；无历史来源的分项在历史日按同口径可得项计算；未在真实宿主验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-m2-ladder",
+      "quote": "连板梯队表：按连板数分层，展示个股、所属题材和今日状态。",
+      "kind": "data",
+      "datasetIds": [
+        "ladderBoard"
+      ],
+      "acceptance": "连板梯队按 2 板及以上分层列出个股、所属题材（涨停原因）与今日状态（封板/封单额/下一日是否连板提示）。",
+      "status": "implemented",
+      "location": "#ladder-body（renderLadder）",
+      "reviewNote": "binding：limit-up-ladder.item[].boards + window.board_caps，题材取当日涨停池同名 thscode 的 limit_up_reason；未在真实宿主验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-m2-clickday",
+      "quote": "点击情绪走势图上的某一天，跳转到当天的连板梯队和情绪明细。",
+      "kind": "behavior",
+      "datasetIds": [
+        "emotionTrend",
+        "ladderBoard"
+      ],
+      "acceptance": "点击走势图任一日，日期上下文切到该交易日，并刷新该日情绪明细与连板梯队。",
+      "status": "implemented",
+      "location": "#emo-chart 命中矩形 → selectDay(dateMs)",
+      "reviewNote": "selectDay 设置统一日期上下文并重载情绪与梯队区域；未做浏览器交互验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-m3-scope",
+      "quote": "监控范围：用户的持仓和自选股。",
+      "kind": "data",
+      "datasetIds": [
+        "watchScope"
+      ],
+      "acceptance": "监控范围由客户端自选股分组与自定义板块读取，不使用页面自造列表；范围为空时整块不渲染。",
+      "status": "implemented",
+      "location": "#ano-scope（loadWatchScope → requestUserSectors）",
+      "reviewNote": "binding：user-sectors(sectorId='0' 自选股 + 自定义板块) → 证券身份 market/code；名称由行情会话补；未在真实宿主验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-m3-detect",
+      "quote": "异动触发条件：短时间快速拉升或下跌、放量突破、封板或炸板、偏离所属板块走势。阈值支持用户调整。",
+      "kind": "behavior",
+      "datasetIds": [
+        "watchQuotes"
+      ],
+      "acceptance": "五类异动条件与阈值可在页面调整并持久化；各行情的异动判定使用当前阈值重新计算。",
+      "status": "implemented",
+      "location": "#ano-thresholds（loadThresholds/saveThresholds）+ detectAnomaly",
+      "reviewNote": "阈值含拉升幅度、下跌幅度、量比、偏离板块百分点、涨跌停判定容差，存 localStorage 键 scs.anomaly.thresholds；未做浏览器验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-m3-card",
+      "quote": "每条异动卡片给出：异动时间、幅度、成交量变化，以及归因结论。",
+      "kind": "data",
+      "datasetIds": [
+        "watchQuotes",
+        "anomalyReason",
+        "anomalyEvents",
+        "anomalyCapital"
+      ],
+      "acceptance": "卡片显示异动检测时间、涨跌幅与量比变化，并给出归因类别与一句话结论。",
+      "status": "implemented",
+      "location": "#ano-list .ano-card（renderAnomalies）",
+      "reviewNote": "binding：行情会话字段 10/199112/13/1771976/330325/8/6 → 幅度与量能；anomaly-analysis-stock、stock-info-events、security-belongs、capital-flow、dragon-tiger-list → 归因；未在真实宿主验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-m3-attrib",
+      "quote": "归因分为个股消息驱动（公告、新闻、互动平台）、板块联动带动、大盘拖累、资金行为（大单、龙虎榜）等类别，并用一句话给出结论。",
+      "kind": "behavior",
+      "datasetIds": [
+        "anomalyReason",
+        "anomalyEvents",
+        "anomalyCapital",
+        "watchQuotes"
+      ],
+      "acceptance": "归因按四类来源判定优先级并给出类别标签与一句话结论，点击卡片展开各类归因依据。",
+      "status": "implemented",
+      "location": "attributeAnomaly → #ano-list 卡片标签与 #ano-detail",
+      "reviewNote": "优先级：个股消息 > 资金行为 > 板块联动 > 大盘拖累；展开区列出命中依据（异动原因文本、事件标题、板块涨幅、主力净额）；未做浏览器交互验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-m3-signal",
+      "quote": "结合当前情绪阶段给出",
+      "kind": "content",
+      "datasetIds": [
+        "emotionTrend"
+      ],
+      "acceptance": "每条异动给出 跟/观望/回避 参考信号，并说明依据（情绪阶段 × 归因类别）。",
+      "status": "implemented",
+      "location": "signalFor(stage, category) → 卡片 .ano-signal",
+      "reviewNote": "信号由情绪阶段与归因类别二维规则计算并附一句理由；结论含“仅供参考”提示；未做浏览器验证。"
+    },
+    {
+      "id": "req-m3-order",
+      "quote": "异动列表按时间倒序排列，新异动置顶高亮。",
+      "kind": "behavior",
+      "datasetIds": [
+        "watchQuotes"
+      ],
+      "acceptance": "异动列表按检测时间倒序；本次刷新新出现的异动置顶并带高亮样式。",
+      "status": "implemented",
+      "location": "#ano-list 排序 + .is-new 高亮",
+      "reviewNote": "每次刷新比较上一轮异动键集合，新增项标记 is-new 并排在最前；未做浏览器验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-m4-import",
+      "quote": "支持上传券商导出的交割单（Excel/CSV）",
+      "kind": "behavior",
+      "datasetIds": [
+        "tradeReview"
+      ],
+      "acceptance": "可选择本地 CSV/TXT 交割单文件，解析成交日期、时间、证券代码、名称、买卖方向、成交价、成交数量、成交金额并进入复盘计算。",
+      "status": "implemented",
+      "location": "#blotter-file（input[type=file] → FileReader → parseBlotter）",
+      "reviewNote": "按表头关键词识别列，容错中英文表头；解析失败不影响内置示例；未做浏览器交互验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-m4-sample",
+      "quote": "页面内置一份示例交割单，没有数据时也能完整体验所有功能。",
+      "kind": "behavior",
+      "datasetIds": [
+        "tradeReview"
+      ],
+      "acceptance": "未上传文件时使用内置示例交割单驱动全部复盘功能，并明确标注为示例数据。",
+      "status": "implemented",
+      "location": "SAMPLE_BLOTTER 常量 + #blotter-source 标注",
+      "reviewNote": "内置示例为页面随附常量，界面标注“示例交割单”，与用户上传数据区分；示例不做行情取数，仅用于结构演示；未做浏览器验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-m4-attribution",
+      "quote": "把收益拆解为选股贡献、择时贡献、仓位贡献。",
+      "kind": "data",
+      "datasetIds": [
+        "tradeReview"
+      ],
+      "acceptance": "对已平仓交易给出选股贡献、择时贡献、仓位贡献三项金额与总收益，三项之和等于总收益。",
+      "status": "implemented",
+      "location": "#pnl-attrib（renderAttribution）",
+      "reviewNote": "择时贡献=买入日收盘价与买入价之差×数量；仓位贡献=（买入金额/平均买入金额-1）×基准收益额；选股贡献=总收益-择时-仓位；个股与指数日线来自 prices-historical/index-prices-historical；未在真实宿主验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-m4-bias",
+      "quote": "追高买入、过早止盈、亏损后加仓摊平、频繁交易、持有过久不止损、情绪化报复性交易。",
+      "kind": "data",
+      "datasetIds": [
+        "tradeReview"
+      ],
+      "acceptance": "六类行为偏差分别判定并统计出现次数、造成的损失金额与典型交易案例。",
+      "status": "implemented",
+      "location": "#bias-list（detectBiases）",
+      "reviewNote": "判定规则见页面 renderBias 说明；损失金额只计负贡献交易；案例取该偏差下金额最典型的一笔；未在真实宿主验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-m4-bias-drill",
+      "quote": "在复盘模块中点击某类行为偏差，列出所有对应的交易明细。",
+      "kind": "behavior",
+      "datasetIds": [
+        "tradeReview"
+      ],
+      "acceptance": "点击某类行为偏差，展开该类偏差涉及的全部交易明细（含日期、代码、名称、动作、金额）。",
+      "status": "implemented",
+      "location": "#bias-list 行点击 → #bias-detail",
+      "reviewNote": "点击后列出该类偏差全部命中交易，再点收起；未做浏览器交互验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-m4-env",
+      "quote": "把每笔交易标注上当天的情绪阶段，统计用户在不同情绪阶段下的胜率、盈亏比和平均收益",
+      "kind": "data",
+      "datasetIds": [
+        "envStats",
+        "emotionTrend"
+      ],
+      "acceptance": "按交易日情绪阶段分组统计胜率、盈亏比、平均收益与亏损占比，并给出占亏损比例最高的阶段结论。",
+      "status": "accepted-change",
+      "changeKind": "replace",
+      "revisedAcceptance": "按交易日的情绪阶段标注每笔交易，统计各阶段胜率、盈亏比、平均收益与亏损金额占比；对照范围覆盖最近 20 个交易日，更早的交易标注为区间外且不计入统计。",
+      "decisionId": "review-history-window",
+      "location": "#env-stats/#env-conclusion（renderEnvStats）",
+      "reviewNote": "交易日情绪阶段来自近 20 交易日涨停/跌停/炸板池与成交额计算的历史情绪分；区间外交易单独标注；引用示例结论句式输出占亏损最高阶段；未在真实宿主验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-m4-report",
+      "quote": "生成日报、周报和月报，并输出3条最重要的改进建议。",
+      "kind": "behavior",
+      "datasetIds": [
+        "tradeReview",
+        "envStats"
+      ],
+      "acceptance": "复盘模块可切换日报/周报/月报，各自给出区间内的交易笔数、盈亏、胜率与阶段分布，并在下方输出 3 条改进建议。",
+      "status": "implemented",
+      "location": "#rev-period 页签 + #rev-report + #advice-list",
+      "reviewNote": "日报=最近1个交易日、周报=最近5个、月报=最近20个；建议由亏损贡献最大的偏差、最差情绪阶段与仓位集中度生成；未做浏览器验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-m4-sync",
+      "quote": "作为次日盘前的纪律提醒。",
+      "kind": "behavior",
+      "datasetIds": [
+        "tradeReview"
+      ],
+      "acceptance": "复盘诊断出的主要行为弱点写入本地并展示在顶部状态栏纪律提醒中，跨会话保留。",
+      "status": "implemented",
+      "location": "persistReview → localStorage scs.review.summary → syncDiscipline → #bar-discipline",
+      "reviewNote": "复盘计算完成后写入摘要（主要弱点、最差阶段、建议首条），状态栏读取并显示；未做浏览器验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-firstscreen",
+      "quote": "首屏突出结论和最重要的变化，不把几十个指标等权平铺。每个模块最上方先给一句话结论，再展开明细。",
+      "kind": "visual",
+      "datasetIds": [],
+      "acceptance": "四个模块顶部各有一句话结论；结论区在版式上比明细区更突出，指标明细位于结论之后。",
+      "status": "implemented",
+      "location": ".verdict（各模块结论条）与 .card-b 明细区",
+      "reviewNote": "每个页签首元素为结论条，其后按重要性排列卡片；未做浏览器几何验证。"
+    },
+    {
+      "id": "req-shared-context",
+      "quote": "四个模块共享同一个日期上下文和同一套情绪阶段判断，保证数据前后一致。",
+      "kind": "behavior",
+      "datasetIds": [
+        "emotionTrend"
+      ],
+      "acceptance": "所有模块读取同一个 state.date 与同一份阶段判定结果；切换日期后各模块同步刷新。",
+      "status": "implemented",
+      "location": "state.date + state.stage（computeStage）被 renderBar/renderEmotion/renderBoardMap/renderAnomalies/renderReview 共用",
+      "reviewNote": "统一日期源与统一 computeStage；历史日期下只显示有历史来源的分项；未做浏览器验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-missing",
+      "quote": "缺失的数据不显示",
+      "kind": "visual",
+      "datasetIds": [],
+      "acceptance": "未取得数据的区域或条目整块不渲染，不使用“暂无数据/待接入”类占位文案。",
+      "status": "implemented",
+      "location": "setHidden/moduleState 空分支：hideEl 隐藏卡片；条目级 filter 后不渲染",
+      "reviewNote": "各区域在 empty/unavailable 分支隐藏自身而不是写入占位文案；未取得报价的对象不进入渲染列表；未做浏览器验证。"
+    },
+    {
+      "id": "req-persist",
+      "quote": "映射规则、异动阈值、自选股列表、历史复盘结果都要保存下来，持续积累。",
+      "kind": "behavior",
+      "datasetIds": [
+        "boardMap"
+      ],
+      "acceptance": "映射规则、异动阈值、监控范围补充与复盘诊断结果均写入本地存储，重新打开页面后恢复。",
+      "status": "implemented",
+      "location": "storage 封装（scs.mapping.rules / scs.anomaly.thresholds / scs.watch.extra / scs.review.summary）",
+      "reviewNote": "四处持久化键在初始化时读取、变更时写入；未做浏览器验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-color",
+      "quote": "颜色遵循A股习惯：红涨绿跌。",
+      "kind": "visual",
+      "datasetIds": [],
+      "acceptance": "涨/正贡献使用红色语义色，跌/负贡献使用绿色语义色，平盘使用中性色。",
+      "status": "implemented",
+      "location": "页面自带调色板 --c-up/--c-down/--c-flat（叠加 .up/.down/.flat 类），颜色不再依赖宿主未提供的语义变量",
+      "reviewNote": "涨跌与盈亏方向统一由 cls() 映射到 --c-up/--c-down/--c-flat；调色板在 :root 与 html.theme-dark 两套下分别给出高对比取值，并由 detectDarkTheme 在初始化与主题变化时切换；未做浏览器渲染验证。"
+    },
+    {
+      "id": "req-responsive",
+      "quote": "页面风格专业、信息密度高但不杂乱，适配桌面端，同时在手机上可正常浏览。",
+      "kind": "visual",
+      "datasetIds": [],
+      "acceptance": "桌面端以多列高密度网格排布；窄屏下网格降为单列、表格可横向滚动、状态栏可换行。",
+      "status": "implemented",
+      "location": "@media 断点 + .scroll-x 表格容器",
+      "reviewNote": "使用 minmax 网格与窄屏媒体查询，表格容器横向滚动；文本与底色在 .app 与各组件上显式声明，避免宿主全局颜色规则注入后出现低对比；未做浏览器几何验证。"
+    },
+    {
+      "id": "req-date-switch",
+      "quote": "支持切换交易日，所有模块同步切换，可以回看历史任意一天的完整作战记录。",
+      "kind": "behavior",
+      "datasetIds": [
+        "emotionTrend"
+      ],
+      "acceptance": "提供交易日下拉与上一/下一交易日按钮；切换后各模块按同一日期重取数据，无历史来源的分项自动隐藏。",
+      "status": "implemented",
+      "location": "#date-sel/#prev-day/#next-day → loadAll(dateMs)",
+      "reviewNote": "交易日由交易日历提供；generation 隔离迟到回包；未做浏览器交互验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-hover",
+      "quote": "图表悬停展示精确数值。",
+      "kind": "behavior",
+      "datasetIds": [
+        "emotionTrend"
+      ],
+      "acceptance": "情绪走势图、连板梯队分布条与资金序列在悬停时显示精确数值与日期。",
+      "status": "implemented",
+      "location": "[data-tip] + #tip 浮层（mousemove 委托）",
+      "reviewNote": "提示内容由同一数据源字段格式化生成；未做浏览器交互验证。",
+      "verification": "static-only"
+    },
+    {
+      "id": "req-watchlist",
+      "quote": "支持自选股的添加、删除和分组。",
+      "kind": "behavior",
+      "datasetIds": [
+        "watchScope"
+      ],
+      "acceptance": "监控范围区支持新增代码到本地补充范围、移除本地补充项，并按分组展示自选与自定义板块。",
+      "status": "implemented",
+      "location": "#ano-scope 工具栏（addWatch/removeWatch）+ 分组渲染",
+      "reviewNote": "客户端自选股按用户板块分组显示；页面可维护本地补充范围（scs.watch.extra），不直接改写客户端自选；未做浏览器验证。",
+      "verification": "static-only"
+    }
+  ],
+  "sourceSha256": "44f61e7b0c771274917fdae0c4efd0615bb1d632365d27c7d83a9f928df9ad55"
+}

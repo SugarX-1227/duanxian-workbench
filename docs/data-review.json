@@ -1,0 +1,889 @@
+{
+  "mode": "static-only",
+  "hostStatus": "pending",
+  "hostReason": "当前无真实 Lumi 宿主联调条件，页面已按登记能力实现请求链路与字段消费，宿主取数结果待验证",
+  "runtimeStatus": "not-run",
+  "runtimeReason": "当前缺少自动页面运行环境（无 jsdom/浏览器驱动），未执行本地运行验收",
+  "datasets": [
+    {
+      "id": "externalIndicators",
+      "status": "implemented",
+      "checkedObjects": [
+        "纳斯达克",
+        "标普500",
+        "道琼斯",
+        "中概股指数",
+        "恒生指数期货",
+        "A50期货",
+        "美元兑人民币",
+        "10年期美债收益率",
+        "原油",
+        "黄金",
+        "铜"
+      ],
+      "bindings": [
+        {
+          "capabilityId": "market-overview",
+          "module": "lumi/capabilities/market-overview",
+          "export": "requestMarketOverview",
+          "requestApi": "requestMarketOverview",
+          "input": {
+            "market": "usshare",
+            "includeHotIndex": true,
+            "includeLimit": false,
+            "includeMarketState": false
+          },
+          "fields": {
+            "指标名称": "hotIndex[].name",
+            "涨跌幅": "hotIndex[].risePercent",
+            "方向": "risePercent 正负 → 上涨/下跌"
+          },
+          "uiConsumption": {
+            "指标名称": "loadExternal → overviewMap → renderExternal → #ext-grid .kv-k",
+            "涨跌幅": "loadExternal → overviewMap[key].changeRate → renderExternal → #ext-grid .kv-v",
+            "方向": "renderExternal → rising/falling 计数 → #ext-verdict 与 #bar-overseas"
+          }
+        },
+        {
+          "capabilityId": "market-overview",
+          "module": "lumi/capabilities/market-overview",
+          "export": "requestMarketOverview",
+          "requestApi": "requestMarketOverview",
+          "input": {
+            "market": "hkshare",
+            "includeHotIndex": true,
+            "includeLimit": false,
+            "includeMarketState": false
+          },
+          "fields": {
+            "指标名称": "hotIndex[].name（恒生指数别名匹配）",
+            "涨跌幅": "hotIndex[].risePercent（恒生指数）"
+          },
+          "uiConsumption": {
+            "指标名称": "loadExternal → hkOverview.hotIndex → overviewMap.hsi.name → #ext-grid",
+            "涨跌幅": "loadExternal → overviewMap.hsi.changeRate → renderExternal → #ext-grid .kv-v"
+          }
+        },
+        {
+          "capabilityId": "native-client-searchCandidates",
+          "module": "lumi/native-data-client",
+          "export": "searchCandidates",
+          "requestApi": "SearchSecuritiesAsync",
+          "input": {
+            "datasetId": "global-indicators",
+            "keywords": "纳斯达克综合指数/标普500指数/道琼斯工业平均指数/纳斯达克中国金龙指数/恒生指数/恒生指数期货/富时中国A50指数期货/美元人民币/美国10年期国债收益率/WTI原油/COMEX黄金/沪铜",
+            "assetPolicy": "all-registered",
+            "candidateLimit": 100,
+            "pageSize": 50,
+            "maxPages": 2
+          },
+          "fields": {
+            "指标名称": "candidates[].name（按对象名称正则唯一匹配，未唯一命中则隐藏该对象）",
+            "单位": "本页按对象声明的展示单位"
+          },
+          "uiConsumption": {
+            "指标名称": "loadExternal → pickFromRecords → renderExternal → #ext-grid .kv-k",
+            "单位": "loadExternal → EXT_OBJECTS[].unit → renderExternal → #ext-grid .kv-v 后缀"
+          }
+        },
+        {
+          "capabilityId": "native-client-refresh",
+          "module": "lumi/native-data-client",
+          "export": "refresh",
+          "requestApi": "RequestRealtimeDataAsync",
+          "input": {
+            "datasetId": "global-indicators",
+            "fields": [
+              10,
+              199112,
+              6,
+              8,
+              13,
+              1771976,
+              1968584,
+              330325
+            ]
+          },
+          "fields": {
+            "最新值": "records[market+code][\"10\"]",
+            "涨跌幅": "records[market+code][\"199112\"]",
+            "方向": "涨跌幅正负 → 涨/跌"
+          },
+          "uiConsumption": {
+            "最新值": "createSession onState → quoteOf → renderExternal → #ext-grid .kv-v",
+            "涨跌幅": "createSession onState → quoteOf.changeRate → renderExternal → #ext-grid .kv-v",
+            "方向": "renderExternal → rising/falling → #ext-verdict 与 #bar-overseas"
+          }
+        }
+      ]
+    },
+    {
+      "id": "boardMap",
+      "status": "implemented",
+      "checkedObjects": [
+        "算力/芯片链",
+        "有色",
+        "油气",
+        "化工",
+        "港股互联网",
+        "消费",
+        "机器人"
+      ],
+      "bindings": [
+        {
+          "capabilityId": "ths-index-list",
+          "module": "lumi/capabilities/datahub/ths-index-list",
+          "export": "requestDataHubThsIndexList",
+          "requestApi": "requestDataHubThsIndexList",
+          "input": {
+            "tag": "industry"
+          },
+          "fields": {
+            "A股板块": "item[].name / item[].thscode（板块目录，用于映射规则与下钻匹配）"
+          },
+          "uiConsumption": {
+            "A股板块": "loadBoardDirectory → boardIdentityOf → mapCardHtml → #map-top .map-h"
+          }
+        },
+        {
+          "capabilityId": "ths-index-list",
+          "module": "lumi/capabilities/datahub/ths-index-list",
+          "export": "requestDataHubThsIndexList",
+          "requestApi": "requestDataHubThsIndexList",
+          "input": {
+            "tag": "cn_concept"
+          },
+          "fields": {
+            "A股板块": "item[].name / item[].thscode（概念板块目录，追加到板块匹配范围）"
+          },
+          "uiConsumption": {
+            "A股板块": "loadBoardDirectory → boardIdentityOf → mapCardHtml → #map-top .map-h"
+          }
+        },
+        {
+          "capabilityId": "index-prices-snapshot",
+          "module": "lumi/capabilities/datahub/index-prices-snapshot",
+          "export": "requestDataHubIndexPricesSnapshot",
+          "requestApi": "requestDataHubIndexPricesSnapshot",
+          "input": {
+            "thscodes": "规则命中的板块指数代码逗号连接"
+          },
+          "fields": {
+            "板块涨跌幅": "item[].price_change_ratio_pct"
+          },
+          "uiConsumption": {
+            "板块涨跌幅": "loadMapQuotes → state.boardQuotes → mapCardHtml → #map-top .map-f"
+          }
+        },
+        {
+          "capabilityId": "ths-index-constituents",
+          "module": "lumi/capabilities/datahub/ths-index-constituents",
+          "export": "requestDataHubThsIndexConstituents",
+          "requestApi": "requestDataHubThsIndexConstituents",
+          "input": {
+            "thscode": "点击的板块指数代码"
+          },
+          "fields": {
+            "代表个股": "item[].name / item[].ticker（板块成分股，下钻列表）"
+          },
+          "uiConsumption": {
+            "代表个股": "drillBoard → #map-drill table td"
+          }
+        },
+        {
+          "capabilityId": "native-client-searchCandidates",
+          "module": "lumi/native-data-client",
+          "export": "searchCandidates",
+          "requestApi": "SearchSecuritiesAsync",
+          "input": {
+            "datasetId": "a-share-universe",
+            "keywords": "映射规则中的代表个股名称",
+            "assetPolicy": "a-share-or-industry-index",
+            "candidateLimit": 100,
+            "pageSize": 50,
+            "maxPages": 2
+          },
+          "fields": {
+            "代表个股": "candidates[].name（名称精确唯一匹配才使用）"
+          },
+          "uiConsumption": {
+            "代表个股": "loadMapQuotes → nameOf → mapCardHtml → #map-top .tagx"
+          }
+        },
+        {
+          "capabilityId": "native-client-refresh",
+          "module": "lumi/native-data-client",
+          "export": "refresh",
+          "requestApi": "RequestRealtimeDataAsync",
+          "input": {
+            "datasetId": "board-representatives",
+            "fields": [
+              10,
+              199112
+            ]
+          },
+          "fields": {
+            "外部对象": "映射规则 rule.src 与外部指标报价匹配",
+            "映射方向": "外部指标涨跌幅 × 规则方向 → 利好/利空",
+            "强度": "|外部指标涨跌幅 × 规则权重|",
+            "映射逻辑": "映射规则 rule.logic",
+            "代表个股涨跌幅": "records[market+code][\"199112\"]"
+          },
+          "uiConsumption": {
+            "外部对象": "buildMapRows → mapCardHtml → #map-top .map-h",
+            "映射方向": "buildMapRows.direction → mapCardHtml → #map-top .dir",
+            "强度": "buildMapRows.strength → mapCardHtml → #map-top 强度文本",
+            "映射逻辑": "mapCardHtml → #map-top .map-b",
+            "代表个股涨跌幅": "loadMapQuotes → state.stockQuotes → mapCardHtml → #map-top .tagx b"
+          }
+        }
+      ]
+    },
+    {
+      "id": "emotionCore",
+      "status": "implemented",
+      "bindings": [
+        {
+          "capabilityId": "datahub-limit-up-pool",
+          "module": "lumi/capabilities/datahub/datahub-limit-up-pool",
+          "export": "requestDataHubDatahubLimitUpPool",
+          "requestApi": "requestDataHubDatahubLimitUpPool",
+          "input": {
+            "date_ms": "所选交易日毫秒",
+            "page": 1,
+            "size": 60,
+            "sort_field": "continue_day_cnt",
+            "sort_dir": "desc"
+          },
+          "fields": {
+            "涨停家数": "pagination.total",
+            "连板最高高度": "item[].continue_day_cnt 最大值",
+            "连板梯队分布": "item[].continue_day_cnt 分组计数",
+            "连板晋级率": "item[].continue_day_cnt>=2 家数 ÷ 前一交易日 pagination.total"
+          },
+          "uiConsumption": {
+            "涨停家数": "loadDayEmotion.limitUpTotal → renderEmotion → #emo-core 单元格",
+            "连板最高高度": "loadDayEmotion.maxBoard → renderEmotion → #emo-core 单元格",
+            "连板梯队分布": "loadDayEmotion.buckets → renderEmotion → #emo-core 单元格",
+            "连板晋级率": "renderEmotion → promote → #emo-core 单元格"
+          }
+        },
+        {
+          "capabilityId": "datahub-limit-down-pool",
+          "module": "lumi/capabilities/datahub/datahub-limit-down-pool",
+          "export": "requestDataHubDatahubLimitDownPool",
+          "requestApi": "requestDataHubDatahubLimitDownPool",
+          "input": {
+            "date_ms": "所选交易日毫秒",
+            "page": 1,
+            "size": 1,
+            "sort_field": "price_change_ratio_pct",
+            "sort_dir": "asc"
+          },
+          "fields": {
+            "跌停家数": "pagination.total"
+          },
+          "uiConsumption": {
+            "跌停家数": "loadDayEmotion.limitDownTotal → renderEmotion → #emo-core 单元格"
+          }
+        },
+        {
+          "capabilityId": "datahub-limit-break-pool",
+          "module": "lumi/capabilities/datahub/datahub-limit-break-pool",
+          "export": "requestDataHubDatahubLimitBreakPool",
+          "requestApi": "requestDataHubDatahubLimitBreakPool",
+          "input": {
+            "date_ms": "所选交易日毫秒",
+            "page": 1,
+            "size": 1,
+            "sort_field": "open_times",
+            "sort_dir": "desc"
+          },
+          "fields": {
+            "炸板率": "pagination.total ÷ (limit-up-pool.pagination.total + 同值)"
+          },
+          "uiConsumption": {
+            "炸板率": "loadDayEmotion.brokRate → renderEmotion → #emo-core 单元格"
+          }
+        },
+        {
+          "capabilityId": "index-prices-historical",
+          "module": "lumi/capabilities/datahub/index-prices-historical",
+          "export": "requestDataHubIndexPricesHistorical",
+          "requestApi": "requestDataHubIndexPricesHistorical",
+          "input": {
+            "thscode": "000001.SH 与 399106.SZ",
+            "interval": "1d",
+            "start": "所选交易日 -12 天毫秒",
+            "end": "所选交易日 +6 小时毫秒"
+          },
+          "fields": {
+            "市场成交额": "item[].turnover（沪、深两指数按 date_ms 合并求和）"
+          },
+          "uiConsumption": {
+            "市场成交额": "loadAmountSeries → computeScore.amount → renderEmotion → #emo-core 单元格"
+          }
+        },
+        {
+          "capabilityId": "native-client-refresh",
+          "module": "lumi/native-data-client",
+          "export": "refresh",
+          "requestApi": "RequestRealtimeDataAsync",
+          "input": {
+            "datasetId": "prev-limit-performance",
+            "fields": [
+              10,
+              199112
+            ]
+          },
+          "fields": {
+            "昨日涨停今日平均涨幅": "records[market+code][\"199112\"] 简单平均（来源为前一交易日涨停池 thscode）"
+          },
+          "uiConsumption": {
+            "昨日涨停今日平均涨幅": "loadPrevLimitPerf → entry.prevLimitAvg → renderEmotion → #emo-core 单元格"
+          }
+        }
+      ]
+    },
+    {
+      "id": "emotionTrend",
+      "status": "implemented",
+      "checkedObjects": [
+        "最近20个交易日"
+      ],
+      "bindings": [
+        {
+          "capabilityId": "datahub-trading-calendar",
+          "module": "lumi/capabilities/datahub/datahub-trading-calendar",
+          "export": "requestDataHubDatahubTradingCalendar",
+          "requestApi": "requestDataHubDatahubTradingCalendar",
+          "input": {},
+          "fields": {
+            "交易日": "item[].date / item[].date_ms"
+          },
+          "uiConsumption": {
+            "交易日": "loadCalendar → state.days → buildDateSelect → #date-sel option"
+          }
+        },
+        {
+          "capabilityId": "datahub-limit-up-pool",
+          "module": "lumi/capabilities/datahub/datahub-limit-up-pool",
+          "export": "requestDataHubDatahubLimitUpPool",
+          "requestApi": "requestDataHubDatahubLimitUpPool",
+          "input": {
+            "date_ms": "近 20 个交易日逐日毫秒",
+            "page": 1,
+            "size": 60,
+            "sort_field": "continue_day_cnt",
+            "sort_dir": "desc"
+          },
+          "fields": {
+            "综合情绪分": "涨停家数分项（clamp(total/80)）",
+            "判断分项明细": "分项原始值与权重"
+          },
+          "uiConsumption": {
+            "综合情绪分": "loadEmotion → computeScore.score → renderEmotion → #emo-gauge 与 #emo-score",
+            "判断分项明细": "entry.factors → renderEmotion → #emo-basis div"
+          }
+        },
+        {
+          "capabilityId": "datahub-limit-down-pool",
+          "module": "lumi/capabilities/datahub/datahub-limit-down-pool",
+          "export": "requestDataHubDatahubLimitDownPool",
+          "requestApi": "requestDataHubDatahubLimitDownPool",
+          "input": {
+            "date_ms": "近 20 个交易日逐日毫秒",
+            "page": 1,
+            "size": 1
+          },
+          "fields": {
+            "综合情绪分": "涨停跌停差分项（clamp((up-down+40)/80)）"
+          },
+          "uiConsumption": {
+            "综合情绪分": "loadEmotion → computeScore → renderTrend svg 折线"
+          }
+        },
+        {
+          "capabilityId": "datahub-limit-break-pool",
+          "module": "lumi/capabilities/datahub/datahub-limit-break-pool",
+          "export": "requestDataHubDatahubLimitBreakPool",
+          "requestApi": "requestDataHubDatahubLimitBreakPool",
+          "input": {
+            "date_ms": "近 20 个交易日逐日毫秒",
+            "page": 1,
+            "size": 1
+          },
+          "fields": {
+            "综合情绪分": "封板质量分项（clamp(1-炸板率)）"
+          },
+          "uiConsumption": {
+            "综合情绪分": "loadEmotion → computeScore → renderTrend svg 折线"
+          }
+        },
+        {
+          "capabilityId": "index-prices-historical",
+          "module": "lumi/capabilities/datahub/index-prices-historical",
+          "export": "requestDataHubIndexPricesHistorical",
+          "requestApi": "requestDataHubIndexPricesHistorical",
+          "input": {
+            "thscode": "000001.SH 与 399106.SZ",
+            "interval": "1d",
+            "start": "近 20 交易日窗口起点 -12 天",
+            "end": "窗口终点 +6 小时"
+          },
+          "fields": {
+            "综合情绪分": "成交额环比分项（clamp((ratio+15)/30)）",
+            "情绪阶段": "情绪分 + 炸板率 + 与前一交易日比较"
+          },
+          "uiConsumption": {
+            "综合情绪分": "loadAmountSeries → computeScore → renderTrend svg 折线",
+            "情绪阶段": "stageOf → renderTrend 阶段切换圆点 与 #emo-stage"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ladderBoard",
+      "status": "implemented",
+      "checkedObjects": [
+        "二板",
+        "三板",
+        "四板",
+        "五板",
+        "六板",
+        "七板及以上"
+      ],
+      "bindings": [
+        {
+          "capabilityId": "datahub-limit-up-ladder",
+          "module": "lumi/capabilities/datahub/datahub-limit-up-ladder",
+          "export": "requestDataHubDatahubLimitUpLadder",
+          "requestApi": "requestDataHubDatahubLimitUpLadder",
+          "input": {},
+          "fields": {
+            "连板层级": "item[].boards 的 two_board/three_board/four_board/five_board/six_board/seven_over",
+            "个股名称": "boards[].name",
+            "今日状态": "boards[].seal_nextday",
+            "层级家数": "window.board_caps[key]"
+          },
+          "uiConsumption": {
+            "连板层级": "renderLadder(boardMap) → #ladder-body td",
+            "个股名称": "renderLadder → #ladder-body td",
+            "今日状态": "ladderStatus → #ladder-body td",
+            "层级家数": "renderLadder → #ladder-caps 与 #ladder-body td"
+          }
+        },
+        {
+          "capabilityId": "datahub-limit-up-pool",
+          "module": "lumi/capabilities/datahub/datahub-limit-up-pool",
+          "export": "requestDataHubDatahubLimitUpPool",
+          "requestApi": "requestDataHubDatahubLimitUpPool",
+          "input": {
+            "date_ms": "所选交易日毫秒",
+            "page": 1,
+            "size": 60,
+            "sort_field": "continue_day_cnt",
+            "sort_dir": "desc"
+          },
+          "fields": {
+            "所属题材": "item[].limit_up_reason（按 thscode 匹配）",
+            "封单额": "item[].seal_money",
+            "连板层级": "item[].continue_day_cnt（历史交易日按连板数分层）",
+            "今日状态": "item[].limit_up_time",
+            "个股名称": "item[].name",
+            "层级家数": "item[].continue_day_cnt 分组计数"
+          },
+          "uiConsumption": {
+            "所属题材": "themeOf → renderLadder → #ladder-body td",
+            "封单额": "renderLadder → #ladder-body 封单额列",
+            "连板层级": "renderLadder(grouped) → #ladder-body td",
+            "今日状态": "renderLadder(grouped) → #ladder-body td",
+            "个股名称": "renderLadder(grouped) → #ladder-body td",
+            "层级家数": "renderLadder(grouped) → #ladder-caps"
+          }
+        }
+      ]
+    },
+    {
+      "id": "watchScope",
+      "status": "implemented",
+      "checkedObjects": [
+        "自选股",
+        "自定义板块"
+      ],
+      "bindings": [
+        {
+          "capabilityId": "user-sectors",
+          "module": "lumi/capabilities/user-sectors",
+          "export": "requestUserSectors",
+          "requestApi": "requestUserSectors",
+          "input": {
+            "sectorId": "0（自选股）",
+            "includeStocks": true
+          },
+          "fields": {
+            "证券代码": "stocks[].code",
+            "市场": "stocks[].market",
+            "所属分组": "sectorName（自定义板块按板块名分组）"
+          },
+          "uiConsumption": {
+            "证券代码": "loadWatchScope → state.watch.items[].code → renderWatchGroups → #watch-groups",
+            "市场": "loadWatchScope → state.watch.items[].market → createSession 入参",
+            "所属分组": "loadWatchScope → groups → renderWatchGroups → #watch-groups"
+          }
+        },
+        {
+          "capabilityId": "user-sectors",
+          "module": "lumi/capabilities/user-sectors",
+          "export": "requestUserSectors",
+          "requestApi": "requestUserSectors",
+          "input": {
+            "includeStocks": true
+          },
+          "fields": {
+            "所属分组": "sectors[].sectorName 与逐板块 stocks[]"
+          },
+          "uiConsumption": {
+            "所属分组": "loadWatchScope → 自定义板块分组 → renderWatchGroups → #watch-groups"
+          }
+        },
+        {
+          "capabilityId": "native-client-refresh",
+          "module": "lumi/native-data-client",
+          "export": "refresh",
+          "requestApi": "RequestRealtimeDataAsync",
+          "input": {
+            "datasetId": "watch-quotes",
+            "fields": [
+              10,
+              199112,
+              6,
+              8,
+              13,
+              1771976,
+              1968584,
+              330325,
+              55
+            ]
+          },
+          "fields": {
+            "证券名称": "records[market+code][\"55\"]"
+          },
+          "uiConsumption": {
+            "证券名称": "loadWatchQuotes → item.name → renderAnomalies → #ano-list .ano-name"
+          }
+        }
+      ]
+    },
+    {
+      "id": "watchQuotes",
+      "status": "implemented",
+      "checkedObjects": [
+        "监控范围内的持仓与自选股"
+      ],
+      "bindings": [
+        {
+          "capabilityId": "native-client-refresh",
+          "module": "lumi/native-data-client",
+          "export": "refresh",
+          "requestApi": "RequestRealtimeDataAsync",
+          "input": {
+            "datasetId": "watch-quotes",
+            "fields": [
+              10,
+              199112,
+              6,
+              8,
+              13,
+              1771976,
+              1968584,
+              330325
+            ]
+          },
+          "fields": {
+            "现价": "records[market+code][\"10\"]",
+            "涨跌幅": "records[market+code][\"199112\"]",
+            "昨收": "records[market+code][\"6\"]",
+            "最高": "records[market+code][\"8\"]",
+            "成交量": "records[market+code][\"13\"]",
+            "量比": "records[market+code][\"1771976\"]",
+            "换手率": "records[market+code][\"1968584\"]",
+            "封单额": "records[market+code][\"330325\"]"
+          },
+          "uiConsumption": {
+            "现价": "quoteOf → detectAnomalies → #ano-list 卡片与 #ano-detail 明细",
+            "涨跌幅": "quoteOf.changeRate → renderAnomalies → #ano-list .ano-h",
+            "昨收": "quoteOf.preClose → limitPriceOf → 封板/炸板判定 → #ano-list 标签",
+            "最高": "quoteOf.high → 炸板判定 → #ano-list 标签",
+            "成交量": "quoteOf.volume → #ano-detail 量能变化文本",
+            "量比": "quoteOf.volumeRatio → renderAnomalies → #ano-list 量比文本",
+            "换手率": "quoteOf.turnoverRate → renderAnomalyDetail → #ano-detail 文本",
+            "封单额": "quoteOf.sealAmount → renderAnomalyDetail → #ano-detail 文本"
+          }
+        }
+      ]
+    },
+    {
+      "id": "anomalyReason",
+      "status": "implemented",
+      "bindings": [
+        {
+          "capabilityId": "anomaly-analysis-stock",
+          "module": "lumi/capabilities/datahub/anomaly-analysis-stock",
+          "export": "requestDataHubAnomalyAnalysisStock",
+          "requestApi": "requestDataHubAnomalyAnalysisStock",
+          "input": {
+            "thscodes": "触发异动的监控标的 thscode 逗号连接（上限 50）"
+          },
+          "fields": {
+            "异动标签": "item[].tag_name",
+            "异动原因文本": "item[].analysis_content",
+            "关键词": "item[].keyword_list",
+            "证券名称": "item[].stock_name"
+          },
+          "uiConsumption": {
+            "异动标签": "attributeAnomalies → evidence → #ano-detail 归因依据列表",
+            "异动原因文本": "attributeAnomalies → evidence → #ano-detail 归因依据列表",
+            "关键词": "attributeAnomalies → evidence 关键词括注 → #ano-detail",
+            "证券名称": "attributeAnomalies → analysis 命中判断 → #ano-list 卡片归因类别"
+          }
+        }
+      ]
+    },
+    {
+      "id": "anomalyEvents",
+      "status": "implemented",
+      "bindings": [
+        {
+          "capabilityId": "stock-info-events",
+          "module": "lumi/capabilities/stock-info-events",
+          "export": "requestStockInfoEvents",
+          "requestApi": "requestStockInfoEvents",
+          "input": {
+            "code": "异动标的代码",
+            "market": "异动标的市场",
+            "type": "all",
+            "max_count": 3
+          },
+          "fields": {
+            "标题": "news[].title / announcements[].title / courier[].title",
+            "时间": "news[].time / announcements[].time / courier[].time",
+            "摘要": "news[].abstract / announcements[].abstract / courier[].abstract",
+            "原文链接": "news[].url / announcements[].url / courier[].url",
+            "事件类型": "news[].type / announcements[].type / courier[].type"
+          },
+          "uiConsumption": {
+            "标题": "attributeAnomalies → evidence 资讯行 → #ano-detail",
+            "时间": "attributeAnomalies → row.links 原文链接文本 → #ano-detail",
+            "摘要": "attributeAnomalies → evidence 资讯摘要 → #ano-detail",
+            "原文链接": "renderAnomalyDetail → #ano-detail a[href]",
+            "事件类型": "attributeAnomalies → row.links 分组 → #ano-detail"
+          }
+        }
+      ]
+    },
+    {
+      "id": "anomalyCapital",
+      "status": "implemented",
+      "bindings": [
+        {
+          "capabilityId": "capital-flow",
+          "module": "lumi/capabilities/capital-flow",
+          "export": "requestCapitalFlow",
+          "requestApi": "requestCapitalFlow",
+          "input": {
+            "code": "异动标的代码",
+            "market": "异动标的市场"
+          },
+          "fields": {
+            "主力净额": "net.main（万元，×10000 换算为元展示）",
+            "主力净量": "net.main×10000 ÷ amount ×100（主力净额占成交额比例）"
+          },
+          "uiConsumption": {
+            "主力净额": "attributeAnomalies → row.mainNet → #ano-detail 资金行 与卡片结论",
+            "主力净量": "attributeAnomalies → row.mainNet 占比 → #ano-detail 资金行"
+          }
+        },
+        {
+          "capabilityId": "datahub-dragon-tiger-list",
+          "module": "lumi/capabilities/datahub/datahub-dragon-tiger-list",
+          "export": "requestDataHubDatahubDragonTigerList",
+          "requestApi": "requestDataHubDatahubDragonTigerList",
+          "input": {
+            "board_type": "all"
+          },
+          "fields": {
+            "龙虎榜净额": "stock_items[].net_value",
+            "机构净额": "stock_items[].org_net_value",
+            "游资净额": "stock_items[].hot_money_net_value"
+          },
+          "uiConsumption": {
+            "龙虎榜净额": "attributeAnomalies → tiger → #ano-detail 龙虎榜行",
+            "机构净额": "attributeAnomalies → tiger → #ano-detail 龙虎榜行",
+            "游资净额": "attributeAnomalies → tiger → #ano-detail 龙虎榜行"
+          }
+        }
+      ]
+    },
+    {
+      "id": "tradeReview",
+      "status": "implemented",
+      "checkedObjects": [
+        "用户上传交割单",
+        "内置示例交割单"
+      ],
+      "bindings": [
+        {
+          "capabilityId": "datahub-trading-calendar",
+          "module": "lumi/capabilities/datahub/datahub-trading-calendar",
+          "export": "requestDataHubDatahubTradingCalendar",
+          "requestApi": "requestDataHubDatahubTradingCalendar",
+          "input": {},
+          "fields": {
+            "成交日期": "item[].date（交易日校验）"
+          },
+          "uiConsumption": {
+            "成交日期": "renderBlotter → #blotter-body 日期列（交易日校验辅助）"
+          }
+        },
+        {
+          "capabilityId": "prices-historical",
+          "module": "lumi/capabilities/datahub/prices-historical",
+          "export": "requestDataHubPricesHistorical",
+          "requestApi": "requestDataHubPricesHistorical",
+          "input": {
+            "thscode": "交割单标的 thscode（按检索结果拼接）",
+            "interval": "1d",
+            "start": "最早买入日 -6 天毫秒",
+            "end": "最晚卖出日 +12 天毫秒"
+          },
+          "fields": {
+            "个股区间日线": "item[].date_ms / item[].close_price / item[].low_price",
+            "买入日收盘价": "item[] 中 date<=买入日 的最近一条 close_price",
+            "区间涨跌幅": "pair (sellPrice-buyPrice)/buyPrice 与同期数据核对",
+            "成交时间": "用户上传交割单「成交时间」列（本地解析，与行情按同笔交易配对使用）",
+            "证券代码": "用户上传交割单「证券代码」列（本地解析，用于拼接 thscode）",
+            "证券名称": "用户上传交割单「证券名称」列（本地解析，缺列时以检索结果补名）",
+            "买卖方向": "用户上传交割单「买卖方向」列（本地解析，决定 FIFO 配对方向）",
+            "成交价": "用户上传交割单「成交价」列（本地解析，参与区间涨跌幅与择时贡献计算）",
+            "成交数量": "用户上传交割单「成交数量」列（本地解析，参与收益额与配对数量）",
+            "成交金额": "用户上传交割单「成交金额」列（本地解析，参与仓位贡献计算）"
+          },
+          "uiConsumption": {
+            "个股区间日线": "loadReviewQuotes → priceMap → detectBiases → #bias-detail 明细",
+            "买入日收盘价": "pair.buyClose → renderAttribution 择时贡献 → #pnl-attrib",
+            "区间涨跌幅": "pair.profit → renderAttribution → #pnl-attrib 总收益",
+            "成交时间": "renderBlotter → #blotter-body 时间列",
+            "证券代码": "renderBlotter → #blotter-body 代码列；pairTrades 配对",
+            "证券名称": "renderBlotter → #blotter-body 名称列",
+            "买卖方向": "renderBlotter → #blotter-body 方向列",
+            "成交价": "renderBlotter → #blotter-body 价格列；pair.timing 计算",
+            "成交数量": "renderBlotter → #blotter-body 数量列；pair.profit 计算",
+            "成交金额": "renderBlotter → #blotter-body 金额列；pair.position 计算"
+          }
+        },
+        {
+          "capabilityId": "index-prices-historical",
+          "module": "lumi/capabilities/datahub/index-prices-historical",
+          "export": "requestDataHubIndexPricesHistorical",
+          "requestApi": "requestDataHubIndexPricesHistorical",
+          "input": {
+            "thscode": "000001.SH",
+            "interval": "1d",
+            "start": "最早买入日 -6 天毫秒",
+            "end": "最晚卖出日 +12 天毫秒"
+          },
+          "fields": {
+            "指数区间日线": "item[].date_ms / item[].close_price"
+          },
+          "uiConsumption": {
+            "指数区间日线": "pair.indexReturn → renderAttribution 基准收益额 → #pnl-attrib"
+          }
+        }
+      ]
+    },
+    {
+      "id": "envStats",
+      "status": "implemented",
+      "bindings": [
+        {
+          "capabilityId": "datahub-trading-calendar",
+          "module": "lumi/capabilities/datahub/datahub-trading-calendar",
+          "export": "requestDataHubDatahubTradingCalendar",
+          "requestApi": "requestDataHubDatahubTradingCalendar",
+          "input": {},
+          "fields": {
+            "交易日": "item[].date（近 20 个交易日窗口）"
+          },
+          "uiConsumption": {
+            "交易日": "state.history 窗口 → renderEnvStats 阶段归组 → #env-stats"
+          }
+        },
+        {
+          "capabilityId": "datahub-limit-up-pool",
+          "module": "lumi/capabilities/datahub/datahub-limit-up-pool",
+          "export": "requestDataHubDatahubLimitUpPool",
+          "requestApi": "requestDataHubDatahubLimitUpPool",
+          "input": {
+            "date_ms": "近 20 个交易日逐日毫秒",
+            "page": 1,
+            "size": 60,
+            "sort_field": "continue_day_cnt",
+            "sort_dir": "desc"
+          },
+          "fields": {
+            "情绪阶段": "涨停家数分项 → 情绪分 → 阶段",
+            "交易笔数": "按交易日归组的已平仓笔数",
+            "胜率": "盈利笔数 ÷ 笔数",
+            "盈亏比": "盈利合计 ÷ 亏损合计",
+            "平均收益": "收益合计 ÷ 笔数",
+            "亏损占比": "该阶段亏损合计 ÷ 全部亏损合计"
+          },
+          "uiConsumption": {
+            "情绪阶段": "stageOnDate → pair.stage → renderEnvStats → #env-stats td",
+            "交易笔数": "renderEnvStats.count → #env-stats td",
+            "胜率": "renderEnvStats.rate → #env-stats td",
+            "盈亏比": "renderEnvStats.ratio → #env-stats td",
+            "平均收益": "renderEnvStats.avg → #env-stats td",
+            "亏损占比": "renderEnvStats.lossShare → #env-stats td 与 #env-conclusion"
+          }
+        },
+        {
+          "capabilityId": "datahub-limit-down-pool",
+          "module": "lumi/capabilities/datahub/datahub-limit-down-pool",
+          "export": "requestDataHubDatahubLimitDownPool",
+          "requestApi": "requestDataHubDatahubLimitDownPool",
+          "input": {
+            "date_ms": "近 20 个交易日逐日毫秒",
+            "page": 1,
+            "size": 1
+          },
+          "fields": {
+            "情绪阶段": "涨停跌停差分项 → 情绪分 → 阶段"
+          },
+          "uiConsumption": {
+            "情绪阶段": "computeScore → stageOf → pair.stage → #env-stats td"
+          }
+        },
+        {
+          "capabilityId": "datahub-limit-break-pool",
+          "module": "lumi/capabilities/datahub/datahub-limit-break-pool",
+          "export": "requestDataHubDatahubLimitBreakPool",
+          "requestApi": "requestDataHubDatahubLimitBreakPool",
+          "input": {
+            "date_ms": "近 20 个交易日逐日毫秒",
+            "page": 1,
+            "size": 1
+          },
+          "fields": {
+            "情绪阶段": "封板质量分项 → 情绪分 → 阶段"
+          },
+          "uiConsumption": {
+            "情绪阶段": "computeScore → stageOf → pair.stage → #env-conclusion 阶段结论"
+          }
+        }
+      ]
+    }
+  ],
+  "sourceSha256": "44f61e7b0c771274917fdae0c4efd0615bb1d632365d27c7d83a9f928df9ad55"
+}

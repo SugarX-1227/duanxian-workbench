@@ -1,0 +1,12 @@
+{
+  "kind": "user-clarification-receipt",
+  "issueId": "external-indicator-scope",
+  "question": "模块一「外盘→A股映射」中，美股三大指数、恒生指数已有稳定来源；但恒生指数期货、富时A50期货、美元兑人民币、10年期美债收益率、原油、黄金、铜这 7 项在当前能力下没有已封装的稳定行情入口，需要页面内自行检索全球标的并取实时报价，跨市场/期货行情能否返回取决于宿主实测。你希望怎么处理？",
+  "channel": "conversation",
+  "note": "通过对话提问卡片提交，用户在同一轮回答中同时给出两个问题的选择，答复以用户消息形式返回。",
+  "reply": {
+    "ref": "user-message:question-answers-2026-09-21",
+    "text": "全量接入，缺项自动隐藏（推荐）",
+    "selectedOptions": ["full-hide-missing"]
+  }
+}

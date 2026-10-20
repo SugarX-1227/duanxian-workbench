@@ -1,0 +1,2274 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>短线交易闭环作战台</title>
+<style>
+  :root{
+    color-scheme: light;
+    --c-line:#d5dae3;
+    --c-text:#11151b;
+    --c-text2:#333c48;
+    --c-text3:#59636f;
+    --c-card:#ffffff;
+    --c-bg:#eceff4;
+    --c-fill:#ffffff;
+    --c-soft:#f4f6f9;
+    --c-hover:#e8ecf2;
+    --c-up:#c92d2a;
+    --c-down:#0d8149;
+    --c-flat:#59636f;
+    --c-accent:#1b58c4;
+    --c-tip-bg:rgba(18,22,29,.95);
+    --c-tip-text:#ffffff;
+    --r-s:var(--widget-radius-sm, 4px);
+    --r-m:var(--widget-radius-md, 8px);
+    --gap:var(--widget-space-md, 12px);
+    --pad:var(--widget-space-section, 14px);
+  }
+  html.theme-dark{
+    color-scheme: dark;
+    --c-line:#333c48;
+    --c-text:#eef2f7;
+    --c-text2:#c6cfda;
+    --c-text3:#94a0ae;
+    --c-card:#1a212a;
+    --c-bg:#0e1319;
+    --c-fill:#232b35;
+    --c-soft:#212932;
+    --c-hover:#2b3540;
+    --c-up:#ff6a5e;
+    --c-down:#35d493;
+    --c-flat:#94a0ae;
+    --c-accent:#71a8ff;
+    --c-tip-bg:rgba(238,242,247,.96);
+    --c-tip-text:#11151b;
+  }
+  html,body{margin:0;padding:0;background:var(--c-bg);color:var(--c-text);
+    font-family:var(--widget-font-sans, "Microsoft YaHei", "PingFang SC", system-ui, sans-serif);
+    font-size:var(--widget-font-size-base, 13px);}
+  .app{display:flex;flex-direction:column;min-height:100vh;}
+  .bar{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:10px;
+    padding:8px var(--pad);background:var(--c-card);border-bottom:1px solid var(--c-line);}
+  .bar-t{font-weight:700;font-size:var(--widget-font-size-lg, 15px);letter-spacing:.4px;}
+  .bar-item{color:var(--c-text2);font-size:var(--widget-font-size-sm, 12px);}
+  .bar-item b{color:var(--c-text);font-weight:600;}
+  .bar-r{margin-left:auto;display:flex;gap:6px;align-items:center;}
+  .disc{color:var(--c-text2);font-size:var(--widget-font-size-sm, 12px);background:var(--c-soft);
+    border:1px dashed var(--c-line);border-radius:var(--r-s);padding:3px 8px;max-width:520px;}
+  .pill{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:10px;
+    font-size:var(--widget-font-size-xs, 11px);font-weight:700;color:#fff;background:var(--c-flat);}
+  .tabs{display:flex;gap:4px;padding:6px var(--pad) 0;background:var(--c-card);border-bottom:1px solid var(--c-line);}
+  .tab{height:var(--widget-button-height-m, 28px);padding:0 14px;border:1px solid transparent;border-bottom:none;
+    background:transparent;color:var(--c-text2);cursor:pointer;font-size:var(--widget-font-size-sm, 12px);
+    border-radius:var(--r-s) var(--r-s) 0 0;}
+  .tab:hover{color:var(--c-text);background:var(--c-soft);}
+  .tab.on{color:var(--c-accent);background:var(--c-bg);border-color:var(--c-line);font-weight:700;}
+  .panes{flex:1;padding:var(--gap);}
+  .pane{display:none;}
+  .pane.on{display:block;}
+  .grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:var(--gap);}
+  .card{background:var(--c-card);border:1px solid var(--c-line);border-radius:var(--r-m);overflow:hidden;min-width:0;}
+  .card-h{display:flex;align-items:center;gap:8px;padding:7px var(--pad);border-bottom:1px solid var(--c-line);}
+  .card-t{font-size:var(--widget-font-size-sm, 12px);font-weight:700;color:var(--c-text2);letter-spacing:.4px;}
+  .card-s{margin-left:auto;font-size:var(--widget-font-size-xs, 11px);color:var(--c-text3);}
+  .card-b{padding:10px var(--pad);}
+  .span12{grid-column:span 12;}
+  .span8{grid-column:span 8;}
+  .span6{grid-column:span 6;}
+  .span4{grid-column:span 4;}
+  .verdict{font-size:var(--widget-font-size-base, 13px);font-weight:600;color:var(--c-text);
+    background:var(--c-soft);border-left:3px solid var(--c-accent);border-radius:0 var(--r-s) var(--r-s) 0;
+    padding:6px 10px;margin-bottom:8px;}
+  .verdict .sub{display:block;margin-top:3px;font-weight:400;color:var(--c-text2);font-size:var(--widget-font-size-sm, 12px);}
+  .kv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));gap:1px;background:var(--c-line);}
+  .kv{background:var(--c-card);padding:6px 8px;}
+  .kv-k{display:block;color:var(--c-text3);font-size:var(--widget-font-size-xs, 11px);}
+  .kv-v{font-size:var(--widget-font-size-base, 13px);font-weight:600;}
+  .btn{height:var(--widget-button-height-s, 26px);padding:0 10px;border-radius:var(--r-s);
+    border:1px solid var(--c-line);background:var(--c-fill);color:var(--c-text2);cursor:pointer;
+    font-size:var(--widget-font-size-sm, 12px);}
+  .btn:hover{background:var(--widget-fill-hover, #f0f1f3);color:var(--c-text);}
+  .btn.primary{border-color:var(--c-accent);color:var(--c-accent);}
+  .sel,.inp{height:var(--widget-button-height-s, 26px);border-radius:var(--r-s);border:1px solid var(--c-line);
+    background:var(--c-fill);color:var(--c-text);padding:0 6px;font-size:var(--widget-font-size-sm, 12px);min-width:0;}
+  .up{color:var(--c-up);} .down{color:var(--c-down);} .flat{color:var(--c-flat);}
+  .tbl{width:100%;border-collapse:collapse;font-size:var(--widget-font-size-sm, 12px);}
+  .tbl th{text-align:left;color:var(--c-text3);font-weight:600;font-size:var(--widget-font-size-xs, 11px);
+    padding:4px 6px;border-bottom:1px solid var(--c-line);white-space:nowrap;}
+  .tbl td{padding:4px 6px;border-bottom:1px solid var(--c-line);white-space:nowrap;}
+  .tbl tbody tr:hover{background:var(--c-soft);}
+  .tbl .num{text-align:right;font-variant-numeric:tabular-nums;}
+  .scroll-y{max-height:320px;overflow:auto;}
+  .scroll-x{overflow-x:auto;}
+  .rows{display:flex;flex-direction:column;gap:6px;}
+  .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .muted{color:var(--c-text3);}
+  .tagx{display:inline-block;padding:1px 6px;border-radius:9px;font-size:var(--widget-font-size-xs, 11px);
+    border:1px solid var(--c-line);color:var(--c-text2);background:var(--c-soft);}
+  .tagx.on{border-color:var(--c-accent);color:var(--c-accent);}
+  .map-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:8px;}
+  .map-card{border:1px solid var(--c-line);border-radius:var(--r-s);padding:8px;background:var(--c-soft);cursor:pointer;}
+  .map-card.lead{border-color:var(--c-accent);}
+  .map-h{display:flex;align-items:center;gap:6px;font-weight:600;}
+  .map-h .arrow{color:var(--c-text3);}
+  .map-b{margin-top:5px;color:var(--c-text2);font-size:var(--widget-font-size-sm, 12px);line-height:1.5;}
+  .map-f{margin-top:5px;display:flex;gap:8px;flex-wrap:wrap;color:var(--c-text3);font-size:var(--widget-font-size-xs, 11px);}
+  .gauge-wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+  .gauge{width:150px;height:88px;}
+  .gauge-num{font-size:22px;font-weight:700;fill:var(--c-text);}
+  .gauge-cap{font-size:10px;fill:var(--c-text3);}
+  .basis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:4px 12px;margin-top:8px;}
+  .basis div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dashed var(--c-line);padding:3px 0;
+    font-size:var(--widget-font-size-xs, 11px);color:var(--c-text2);}
+  .chart{width:100%;height:150px;display:block;}
+  .ano-list{display:flex;flex-direction:column;gap:6px;}
+  .ano-card{border:1px solid var(--c-line);border-radius:var(--r-s);padding:7px 9px;background:var(--c-soft);cursor:pointer;}
+  .ano-card.is-new{border-color:var(--c-accent);box-shadow:inset 3px 0 0 var(--c-accent);}
+  .ano-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .ano-name{font-weight:700;}
+  .ano-b{margin-top:4px;color:var(--c-text2);font-size:var(--widget-font-size-sm, 12px);}
+  .ano-sig{padding:1px 7px;border-radius:9px;font-size:var(--widget-font-size-xs, 11px);font-weight:700;border:1px solid;}
+  .sig-follow{color:var(--c-up);border-color:var(--c-up);}
+  .sig-wait{color:var(--c-text2);border-color:var(--c-line);}
+  .sig-avoid{color:var(--c-down);border-color:var(--c-down);}
+  .drill{margin-top:8px;border-top:1px dashed var(--c-line);padding-top:8px;}
+  .details{border:1px solid var(--c-line);border-radius:var(--r-s);margin-top:6px;padding:6px 9px;background:var(--c-card);}
+  .thr{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 10px;}
+  .thr label{display:flex;align-items:center;gap:6px;font-size:var(--widget-font-size-xs, 11px);color:var(--c-text2);}
+  .thr input{width:66px;}
+  .bias-row{display:flex;align-items:center;gap:8px;padding:5px 8px;border:1px solid var(--c-line);
+    border-radius:var(--r-s);cursor:pointer;background:var(--c-soft);}
+  .bias-row.on{border-color:var(--c-accent);}
+  .bias-row .bn{font-weight:600;min-width:150px;}
+  .bias-row .bd{margin-left:auto;color:var(--c-text3);font-size:var(--widget-font-size-xs, 11px);}
+  #tip{position:fixed;z-index:60;pointer-events:none;padding:5px 8px;border-radius:var(--r-s);
+    background:var(--c-tip-bg);color:var(--c-tip-text);font-size:var(--widget-font-size-xs, 11px);
+    box-shadow:0 4px 14px rgba(0,0,0,.25);white-space:pre-line;}
+
+  /* 主题与对比度层：页面自带完整调色板，显式声明文本与底色，避免宿主全局颜色覆盖后出现低对比 */
+  .app{color:var(--c-text);background:var(--c-bg);}
+  .bar{background:var(--c-card);color:var(--c-text);border-bottom-color:var(--c-line);}
+  .bar-t{color:var(--c-text);}
+  .bar-item{color:var(--c-text2);}
+  .bar-item b{color:var(--c-text);}
+  .disc{color:var(--c-text2);background:var(--c-soft);border-color:var(--c-line);}
+  .pill{color:#fff;}
+  .tabs{background:var(--c-card);border-bottom-color:var(--c-line);}
+  .tab{color:var(--c-text2);}
+  .tab:hover{color:var(--c-text);background:var(--c-hover);}
+  .tab.on{color:var(--c-accent);background:var(--c-bg);border-color:var(--c-line);}
+  .card{background:var(--c-card);border-color:var(--c-line);color:var(--c-text);}
+  .card-h{border-bottom-color:var(--c-line);}
+  .card-t{color:var(--c-text2);}
+  .card-s{color:var(--c-text3);}
+  .verdict{color:var(--c-text);background:var(--c-soft);border-left-color:var(--c-accent);}
+  .verdict .sub{color:var(--c-text2);}
+  .kv-grid{background:var(--c-line);}
+  .kv{background:var(--c-card);}
+  .kv-k{color:var(--c-text3);}
+  .kv-v{color:var(--c-text);}
+  .btn{background:var(--c-fill);color:var(--c-text2);border-color:var(--c-line);}
+  .btn:hover{background:var(--c-hover);color:var(--c-text);}
+  .btn.primary{border-color:var(--c-accent);color:var(--c-accent);}
+  .sel,.inp{background:var(--c-fill);color:var(--c-text);border-color:var(--c-line);}
+  .sel option{background:var(--c-card);color:var(--c-text);}
+  .inp::placeholder{color:var(--c-text3);opacity:1;}
+  .tbl{color:var(--c-text);}
+  .tbl th{color:var(--c-text3);border-bottom-color:var(--c-line);}
+  .tbl td{border-bottom-color:var(--c-line);}
+  .tbl tbody tr:hover{background:var(--c-hover);}
+  .muted{color:var(--c-text3);}
+  .tagx{color:var(--c-text2);background:var(--c-soft);border-color:var(--c-line);}
+  .tagx.on{color:var(--c-accent);border-color:var(--c-accent);}
+  .map-card{background:var(--c-soft);border-color:var(--c-line);color:var(--c-text);}
+  .map-card:hover{background:var(--c-hover);}
+  .map-card.lead{border-color:var(--c-accent);}
+  .map-h{color:var(--c-text);}
+  .map-h .arrow{color:var(--c-text3);}
+  .map-b{color:var(--c-text2);}
+  .map-f{color:var(--c-text3);}
+  .basis div{color:var(--c-text2);border-bottom-color:var(--c-line);}
+  .ano-card{background:var(--c-soft);border-color:var(--c-line);color:var(--c-text);}
+  .ano-card:hover{background:var(--c-hover);}
+  .ano-card.is-new{border-color:var(--c-accent);box-shadow:inset 3px 0 0 var(--c-accent);}
+  .ano-b{color:var(--c-text2);}
+  .ano-sig{background:var(--c-soft);}
+  .sig-follow{color:var(--c-up);border-color:var(--c-up);}
+  .sig-wait{color:var(--c-text2);border-color:var(--c-line);}
+  .sig-avoid{color:var(--c-down);border-color:var(--c-down);}
+  .bias-row{background:var(--c-soft);border-color:var(--c-line);color:var(--c-text);}
+  .bias-row:hover{background:var(--c-hover);}
+  .bias-row.on{border-color:var(--c-accent);}
+  .bias-row .bd{color:var(--c-text3);}
+  .details{background:var(--c-card);border-color:var(--c-line);color:var(--c-text);}
+  .details summary{color:var(--c-text2);}
+  .thr label{color:var(--c-text2);}
+  a{color:var(--c-accent);}
+  .up{color:var(--c-up);} .down{color:var(--c-down);} .flat{color:var(--c-flat);}
+  .gauge-num{fill:var(--c-text);}
+  .gauge-cap{fill:var(--c-text3);}
+
+  [hidden]{display:none !important;}
+  @media (max-width: 900px){
+    .span8,.span6,.span4{grid-column:span 12;}
+    .bar{position:static;}
+    .disc{max-width:100%;}
+    .scroll-y{max-height:none;}
+  }
+</style>
+</head>
+<body>
+<!-- lumi-capabilities -->
+<div class="app">
+  <div class="bar" id="bar">
+    <span class="bar-t">短线交易闭环作战台</span>
+    <span class="pill" id="bar-stage">情绪待判定</span>
+    <span class="bar-item">外盘 <b id="bar-overseas">--</b></span>
+    <span class="bar-item">建议仓位 <b id="bar-position">--</b></span>
+    <span class="disc" id="bar-discipline">--</span>
+    <span class="muted" id="load-state" hidden></span>
+    <div class="bar-r">
+      <button class="btn" id="prev-day" type="button">上一交易日</button>
+      <select class="sel" id="date-sel" aria-label="切换交易日"></select>
+      <button class="btn" id="next-day" type="button">下一交易日</button>
+      <button class="btn" id="reload" type="button">刷新</button>
+    </div>
+  </div>
+
+  <nav class="tabs" id="pane-tabs">
+    <button class="tab" type="button" data-pane="pre">盘前映射</button>
+    <button class="tab" type="button" data-pane="emotion">情绪温度</button>
+    <button class="tab" type="button" data-pane="intraday">盘中异动</button>
+    <button class="tab" type="button" data-pane="review">盘后复盘</button>
+  </nav>
+
+  <main class="panes">
+    <section class="pane on" id="pane-pre">
+      <div class="grid">
+        <section class="card span12" id="m-ext">
+          <div class="card-h"><span class="card-t">隔夜外部环境</span><span class="card-s" id="ext-scope"></span></div>
+          <div class="card-b">
+            <div class="verdict" id="ext-verdict">正在读取隔夜外部环境…</div>
+            <div class="kv-grid" id="ext-grid"></div>
+          </div>
+        </section>
+        <section class="card span12" id="m-map">
+          <div class="card-h"><span class="card-t">外盘到A股映射</span><span class="card-s" id="map-scope"></span></div>
+          <div class="card-b">
+            <div class="verdict" id="map-verdict">正在生成映射结论…</div>
+            <div class="map-list" id="map-top"></div>
+            <details class="details" id="map-rest-wrap" hidden>
+              <summary>其余映射</summary>
+              <div class="map-list" id="map-rest" style="margin-top:6px"></div>
+            </details>
+            <div class="drill" id="map-drill" hidden></div>
+          </div>
+        </section>
+        <section class="card span12" id="m-rules">
+          <div class="card-h"><span class="card-t">映射规则</span><span class="card-s">可增删改，保存后长期复用</span></div>
+          <div class="card-b">
+            <div class="row" id="rule-form">
+              <input class="inp" id="rule-src" placeholder="外部对象，如 特斯拉">
+              <input class="inp" id="rule-board" placeholder="A股板块，如 机器人">
+              <select class="sel" id="rule-dir" aria-label="映射方向"><option value="同向">同向</option><option value="反向">反向</option></select>
+              <input class="inp" id="rule-weight" type="number" step="0.1" min="0" max="2" value="1" aria-label="强度权重" style="width:70px">
+              <input class="inp" id="rule-stocks" placeholder="代表个股，逗号分隔">
+              <input class="inp" id="rule-logic" placeholder="映射逻辑说明" style="flex:1;min-width:180px">
+              <button class="btn" id="rule-add" type="button">新增规则</button>
+              <button class="btn" id="rule-reset" type="button">恢复默认</button>
+            </div>
+            <div class="scroll-y" style="margin-top:8px">
+              <table class="tbl">
+                <thead><tr><th>外部对象</th><th>A股板块</th><th>方向</th><th class="num">权重</th><th>代表个股</th><th>映射逻辑</th><th></th></tr></thead>
+                <tbody id="rule-list"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="pane" id="pane-emotion">
+      <div class="grid">
+        <section class="card span8" id="m-emo">
+          <div class="card-h"><span class="card-t">短线情绪温度计</span><span class="card-s" id="emo-scope"></span></div>
+          <div class="card-b">
+            <div class="verdict" id="emo-verdict">正在计算情绪温度…</div>
+            <div class="gauge-wrap">
+              <div id="emo-gauge"></div>
+              <div style="flex:1;min-width:220px">
+                <div class="row"><span class="kv-k">当前阶段</span><b id="emo-stage" style="font-size:15px">--</b>
+                  <span class="kv-k">综合情绪分</span><b id="emo-score">--</b></div>
+                <div class="basis" id="emo-basis"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section class="card span4" id="m-core">
+          <div class="card-h"><span class="card-t">情绪核心指标</span><span class="card-s" id="core-scope"></span></div>
+          <div class="card-b"><div class="kv-grid" id="emo-core"></div></div>
+        </section>
+        <section class="card span12" id="m-trend">
+          <div class="card-h"><span class="card-t">近20个交易日情绪分走势</span><span class="card-s">圆点为情绪阶段切换，点击可查看当天明细</span></div>
+          <div class="card-b"><div id="emo-chart"></div></div>
+        </section>
+        <section class="card span12" id="m-ladder">
+          <div class="card-h"><span class="card-t">连板梯队</span><span class="card-s" id="ladder-scope"></span></div>
+          <div class="card-b">
+            <div id="ladder-caps" class="basis"></div>
+            <div class="scroll-y" style="margin-top:8px">
+              <table class="tbl">
+                <thead><tr><th>层级</th><th>个股</th><th>所属题材</th><th>今日状态</th><th class="num">封单额</th><th class="num">层级家数</th></tr></thead>
+                <tbody id="ladder-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="pane" id="pane-intraday">
+      <div class="grid">
+        <section class="card span12" id="m-ano">
+          <div class="card-h"><span class="card-t">异动归因解释器</span><span class="card-s" id="ano-scope"></span></div>
+          <div class="card-b">
+            <div class="verdict" id="ano-verdict">正在读取监控范围…</div>
+            <div class="card" id="ano-watch" style="margin-bottom:8px">
+              <div class="card-h"><span class="card-t">监控范围</span><span class="card-s">来自客户端自选股与自定义板块，可补充本地范围</span></div>
+              <div class="card-b">
+                <div class="row" id="watch-groups"></div>
+                <div class="row" style="margin-top:8px">
+                  <input class="inp" id="watch-code" placeholder="补充代码或名称，如 600519 或 贵州茅台">
+                  <input class="inp" id="watch-group" placeholder="分组，默认本地补充" style="width:150px">
+                  <button class="btn" id="watch-add" type="button">加入监控范围</button>
+                </div>
+              </div>
+            </div>
+            <div class="card" id="ano-thr-card" style="margin-bottom:8px">
+              <div class="card-h"><span class="card-t">异动触发阈值</span><span class="card-s">调整后按新阈值重算</span></div>
+              <div class="card-b">
+                <div class="thr">
+                  <label>拉升幅度(％) <input class="inp" id="thr-rise" type="number" step="0.5" min="0"></label>
+                  <label>下跌幅度(％) <input class="inp" id="thr-fall" type="number" step="0.5" min="0"></label>
+                  <label>放量量比 <input class="inp" id="thr-vol" type="number" step="0.1" min="0"></label>
+                  <label>偏离板块(百分点) <input class="inp" id="thr-dev" type="number" step="0.5" min="0"></label>
+                  <button class="btn" id="thr-save" type="button">保存阈值</button>
+                </div>
+              </div>
+            </div>
+            <div class="ano-list" id="ano-list"></div>
+            <div id="ano-detail"></div>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="pane" id="pane-review">
+      <div class="grid">
+        <section class="card span12" id="m-rev">
+          <div class="card-h"><span class="card-t">交割单复盘</span><span class="card-s" id="blotter-source"></span></div>
+          <div class="card-b">
+            <div class="verdict" id="rev-verdict">正在读取交割单…</div>
+            <div class="row">
+              <input class="inp" id="blotter-file" type="file" accept=".csv,.txt,.tsv">
+              <button class="btn" id="blotter-sample" type="button">载入示例交割单</button>
+              <button class="btn" id="blotter-clear" type="button">清空本地上传</button>
+              <span class="muted" id="blotter-count"></span>
+            </div>
+            <div class="scroll-y" style="margin-top:8px;max-height:220px">
+              <table class="tbl">
+                <thead><tr><th>成交日期</th><th>时间</th><th>代码</th><th>名称</th><th>方向</th><th class="num">成交价</th><th class="num">数量</th><th class="num">金额</th></tr></thead>
+                <tbody id="blotter-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+        <section class="card span6" id="m-attrib">
+          <div class="card-h"><span class="card-t">盈亏归因</span><span class="card-s" id="attrib-scope"></span></div>
+          <div class="card-b"><div id="pnl-attrib"></div></div>
+        </section>
+        <section class="card span6" id="m-env">
+          <div class="card-h"><span class="card-t">环境对照分析</span><span class="card-s" id="env-scope"></span></div>
+          <div class="card-b">
+            <div class="verdict" id="env-conclusion">正在对照历史情绪阶段…</div>
+            <div class="scroll-x"><table class="tbl">
+              <thead><tr><th>情绪阶段</th><th class="num">交易笔数</th><th class="num">胜率</th><th class="num">盈亏比</th><th class="num">平均收益</th><th class="num">亏损占比</th></tr></thead>
+              <tbody id="env-stats"></tbody>
+            </table></div>
+          </div>
+        </section>
+        <section class="card span12" id="m-bias">
+          <div class="card-h"><span class="card-t">行为偏差识别</span><span class="card-s">点击某类偏差查看全部对应交易</span></div>
+          <div class="card-b">
+            <div class="rows" id="bias-list"></div>
+            <div id="bias-detail"></div>
+          </div>
+        </section>
+        <section class="card span12" id="m-advice">
+          <div class="card-h"><span class="card-t">复盘报告与改进建议</span><span class="card-s" id="rev-scope"></span></div>
+          <div class="card-b">
+            <div class="row" id="rev-period">
+              <button class="tab on" type="button" data-period="day">日报</button>
+              <button class="tab" type="button" data-period="week">周报</button>
+              <button class="tab" type="button" data-period="month">月报</button>
+            </div>
+            <div id="rev-report" style="margin-top:8px"></div>
+            <div class="rows" id="advice-list" style="margin-top:8px"></div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+</div>
+<div id="tip" hidden></div>
+
+<script>
+(function () {
+  'use strict';
+
+  const { dataHubPayload } = LumiCapabilities.require('lumi/data-view');
+  const { createNativeDataClient } = LumiCapabilities.require('lumi/native-data-client');
+  const { requestMarketOverview } = LumiCapabilities.require('lumi/capabilities/market-overview');
+  const { requestUserSectors } = LumiCapabilities.require('lumi/capabilities/user-sectors');
+  const { requestStockInfoEvents } = LumiCapabilities.require('lumi/capabilities/stock-info-events');
+  const { requestCapitalFlow } = LumiCapabilities.require('lumi/capabilities/capital-flow');
+  const { requestSecurityBelongs } = LumiCapabilities.require('lumi/capabilities/security-belongs');
+  const { requestDataHubDatahubTradingCalendar } = LumiCapabilities.require('lumi/capabilities/datahub/datahub-trading-calendar');
+  const { requestDataHubIndexPricesSnapshot } = LumiCapabilities.require('lumi/capabilities/datahub/index-prices-snapshot');
+  const { requestDataHubIndexPricesHistorical } = LumiCapabilities.require('lumi/capabilities/datahub/index-prices-historical');
+  const { requestDataHubPricesHistorical } = LumiCapabilities.require('lumi/capabilities/datahub/prices-historical');
+  const { requestDataHubThsIndexList } = LumiCapabilities.require('lumi/capabilities/datahub/ths-index-list');
+  const { requestDataHubThsIndexConstituents } = LumiCapabilities.require('lumi/capabilities/datahub/ths-index-constituents');
+  const { requestDataHubDatahubLimitUpPool } = LumiCapabilities.require('lumi/capabilities/datahub/datahub-limit-up-pool');
+  const { requestDataHubDatahubLimitDownPool } = LumiCapabilities.require('lumi/capabilities/datahub/datahub-limit-down-pool');
+  const { requestDataHubDatahubLimitBreakPool } = LumiCapabilities.require('lumi/capabilities/datahub/datahub-limit-break-pool');
+  const { requestDataHubDatahubLimitUpLadder } = LumiCapabilities.require('lumi/capabilities/datahub/datahub-limit-up-ladder');
+  const { requestDataHubAnomalyAnalysisStock } = LumiCapabilities.require('lumi/capabilities/datahub/anomaly-analysis-stock');
+  const { requestDataHubDatahubDragonTigerList } = LumiCapabilities.require('lumi/capabilities/datahub/datahub-dragon-tiger-list');
+
+  const client = createNativeDataClient();
+
+  const FIELD = { latest: 10, changeRate: 199112, preClose: 6, open: 7, high: 8, low: 9, volume: 13, volumeRatio: 1771976, turnoverRate: 1968584, sealAmount: 330325, name: 55 };
+  const FIELDS = Object.values(FIELD);
+
+  const STAGES = ['冰点', '修复', '发酵', '高潮', '分歧', '退潮'];
+  const STAGE_COLOR = { 冰点: '#2f6fd0', 修复: '#1b58c4', 发酵: '#b3730a', 高潮: '#c92d2a', 分歧: '#7a4fd0', 退潮: '#0d8149' };
+  const STAGE_POSITION = { 冰点: '0-2成', 修复: '2-4成', 发酵: '4-6成', 高潮: '5-7成（不追高）', 分歧: '2-4成', 退潮: '0-2成' };
+  const INDEX_NAMES = { '000001.SH': '上证指数', '399106.SZ': '深证综指' };
+
+  const EXT_OBJECTS = [
+    { key: 'nasdaq', name: '纳斯达克', kw: '纳斯达克综合指数', unit: '点', test: /纳斯达克/ },
+    { key: 'sp500', name: '标普500', kw: '标普500指数', unit: '点', test: /标普500/ },
+    { key: 'dow', name: '道琼斯', kw: '道琼斯工业平均指数', unit: '点', test: /道琼斯/ },
+    { key: 'chinaadr', name: '中概股指数', kw: '纳斯达克中国金龙指数', unit: '点', test: /中国金龙|中概/ },
+    { key: 'hsi', name: '恒生指数', kw: '恒生指数', unit: '点', test: /^恒生指数$/ },
+    { key: 'hsif', name: '恒生指数期货', kw: '恒生指数期货', unit: '点', test: /恒生.*期货|恒指期货/ },
+    { key: 'a50', name: 'A50期货', kw: '富时中国A50指数期货', unit: '点', test: /A50/ },
+    { key: 'usdcny', name: '美元兑人民币', kw: '美元人民币', unit: '', test: /美元.*人民币|USDCNH/ },
+    { key: 'us10y', name: '10年期美债收益率', kw: '美国10年期国债收益率', unit: '%', test: /10年期.*(国债|美债)/ },
+    { key: 'oil', name: '原油', kw: 'WTI原油', unit: '美元/桶', test: /原油/ },
+    { key: 'gold', name: '黄金', kw: 'COMEX黄金', unit: '美元/盎司', test: /黄金/ },
+    { key: 'copper', name: '铜', kw: '沪铜', unit: '元/吨', test: /铜/ }
+  ];
+  const OVERVIEW_ALIAS = { nasdaq: /纳斯达克/, sp500: /标普/, dow: /道琼斯/, hsi: /恒生/ };
+
+  const DEFAULT_RULES = [
+    { id: 'r-nas', src: '纳斯达克', board: '算力与芯片', dir: '同向', weight: 1.2, logic: '美股科技指数走强时，A股算力、光模块与半导体设备的风险偏好同步打开。', stocks: ['中际旭创', '寒武纪'] },
+    { id: 'r-sp', src: '标普500', board: '半导体', dir: '同向', weight: 1, logic: '美股宽基走强带动全球半导体估值中枢，映射到国产设备与材料。', stocks: ['北方华创'] },
+    { id: 'r-adr', src: '中概股指数', board: '港股互联网', dir: '同向', weight: 1.1, logic: '中概股情绪修复直接对应港股互联网，并外溢到A股消费与平台经济链。', stocks: ['贵州茅台'] },
+    { id: 'r-cu', src: '铜', board: '有色', dir: '同向', weight: 1, logic: '铜价上行反映工业需求与全球流动性预期，直接映射铜钴与工业金属。', stocks: ['江西铜业', '紫金矿业'] },
+    { id: 'r-oil', src: '原油', board: '油气', dir: '同向', weight: 0.9, logic: '油价波动先影响上游油气开采，再传导到炼化与化工成本端。', stocks: ['中国海油', '万华化学'] },
+    { id: 'r-hsi', src: '恒生指数', board: '港股互联网', dir: '同向', weight: 0.8, logic: '港股整体风险偏好决定南向资金节奏，进而影响A股成长板块。', stocks: ['恒生电子'] },
+    { id: 'r-gold', src: '黄金', board: '黄金概念', dir: '同向', weight: 0.8, logic: '金价上行推升黄金股盈利预期，避险情绪同步抬升板块关注度。', stocks: ['山东黄金'] },
+    { id: 'r-tsl', src: '美元兑人民币', board: '出口链', dir: '反向', weight: 0.7, logic: '人民币贬值利多出口占比高的制造业，升值则压制汇兑收益。', stocks: ['许继电气'] }
+  ];
+
+  const SAMPLE_BLOTTER = [
+    '成交日期,成交时间,证券代码,证券名称,买卖方向,成交价,成交数量,成交金额',
+    '2026-09-14,09:41:12,600362,江西铜业,买入,21.30,2000,42600',
+    '2026-09-14,14:02:31,600362,江西铜业,卖出,22.05,2000,44100',
+    '2026-09-15,09:35:02,002230,科大讯飞,买入,48.60,1000,48600',
+    '2026-09-15,10:12:44,002230,科大讯飞,买入,47.10,1000,47100',
+    '2026-09-16,13:20:09,002230,科大讯飞,卖出,46.20,2000,92400',
+    '2026-09-16,09:52:18,300308,中际旭创,买入,132.40,500,66200',
+    '2026-09-17,10:05:55,300308,中际旭创,卖出,138.90,500,69450',
+    '2026-09-17,09:44:03,600519,贵州茅台,买入,1480.00,100,148000',
+    '2026-09-18,14:30:21,600519,贵州茅台,卖出,1462.00,100,146200',
+    '2026-09-18,09:38:47,601899,紫金矿业,买入,18.05,5000,90250',
+    '2026-09-18,13:05:12,601899,紫金矿业,卖出,17.62,5000,88100',
+    '2026-09-18,13:25:40,601899,紫金矿业,买入,17.40,5000,87000'
+  ].join('\n');
+
+  const el = id => document.getElementById(id);
+  const esc = value => String(value == null ? '' : value)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const num = value => (typeof value === 'number' && isFinite(value)) ? value : null;
+  const clamp01 = value => value <= 0 ? 0 : value >= 1 ? 1 : value;
+  const warn = (message, error) => console.warn('[作战台] ' + message, error && error.message ? error.message : error || '');
+  function pct(value, digits) {
+    if (value == null) return '--';
+    return (value > 0 ? '+' : '') + value.toFixed(digits == null ? 2 : digits) + '%';
+  }
+  function cls(value) { return value == null ? 'flat' : value > 0 ? 'up' : value < 0 ? 'down' : 'flat'; }
+  function fmtPrice(value) { return value == null ? '--' : (Math.abs(value) >= 1000 ? value.toFixed(0) : value >= 100 ? value.toFixed(1) : value.toFixed(2)); }
+  function fmtYi(value) {
+    if (value == null) return '--';
+    const abs = Math.abs(value);
+    if (abs >= 1e12) return (value / 1e12).toFixed(2) + '万亿';
+    if (abs >= 1e8) return (value / 1e8).toFixed(0) + '亿';
+    if (abs >= 1e4) return (value / 1e4).toFixed(0) + '万';
+    return value.toFixed(0);
+  }
+  function fmtSignedYi(value) { return value == null ? '--' : (value > 0 ? '+' : '') + fmtYi(value); }
+  function dayText(ms) {
+    const date = new Date(ms);
+    const pad = v => (v < 10 ? '0' + v : '' + v);
+    return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
+  }
+  function clockText() {
+    const date = new Date();
+    const pad = v => (v < 10 ? '0' + v : '' + v);
+    return pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
+  }
+  function tagColor(name) { return STAGE_COLOR[name] || 'var(--c-flat)'; }
+  function hide(node) { if (node) node.hidden = true; }
+  function show(node) { if (node) node.hidden = false; }
+  function tipAttr(text) { return ' data-tip="' + esc(text) + '"'; }
+  function setLoadState(text) {
+    const node = el('load-state');
+    if (!node) return;
+    if (text) { node.textContent = text; node.hidden = false; }
+    else { node.textContent = ''; node.hidden = true; }
+  }
+
+  function colorLuminance(value) {
+    const text = String(value == null ? '' : value).trim();
+    if (!text) return null;
+    let r, g, b, alpha = 1;
+    let hit = text.match(/^#([0-9a-f]{3,8})$/i);
+    if (hit) {
+      let hex = hit[1];
+      if (hex.length === 3 || hex.length === 4) hex = hex.split('').map(ch => ch + ch).join('');
+      r = parseInt(hex.slice(0, 2), 16); g = parseInt(hex.slice(2, 4), 16); b = parseInt(hex.slice(4, 6), 16);
+      if (hex.length === 8) alpha = parseInt(hex.slice(6, 8), 16) / 255;
+    } else {
+      hit = text.match(/^rgba?\(([^)]+)\)$/i);
+      if (!hit) return null;
+      const parts = hit[1].split(',').map(part => parseFloat(part));
+      r = parts[0]; g = parts[1]; b = parts[2];
+      if (parts.length > 3 && isFinite(parts[3])) alpha = parts[3];
+    }
+    if (![r, g, b].every(isFinite) || !(alpha > 0)) return null;
+    return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+  }
+  function detectDarkTheme() {
+    const root = document.documentElement;
+    const marks = [
+      root.getAttribute('data-theme'), root.getAttribute('theme'), root.getAttribute('data-color-scheme'), root.className,
+      document.body ? document.body.getAttribute('data-theme') : '',
+      document.body ? document.body.className : ''
+    ];
+    if (marks.some(mark => /dark|night|黑|深色/i.test(String(mark == null ? '' : mark)))) return true;
+    if (marks.some(mark => /light|白|浅色/i.test(String(mark == null ? '' : mark)))) return false;
+    const rootStyle = window.getComputedStyle(root);
+    const hostSurface = colorLuminance(rootStyle.getPropertyValue('--widget-bg'));
+    if (hostSurface != null) return hostSurface < 0.45;
+    const hostText = colorLuminance(rootStyle.getPropertyValue('--widget-text'));
+    const bodyBackground = document.body ? colorLuminance(window.getComputedStyle(document.body).backgroundColor) : null;
+    if (bodyBackground != null) return bodyBackground < 0.45;
+    if (hostText != null) return hostText > 0.62;
+    const bodyText = document.body ? colorLuminance(window.getComputedStyle(document.body).color) : null;
+    if (bodyText != null) return bodyText > 0.62;
+    return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  }
+  function applyTheme() {
+    document.documentElement.classList.toggle('theme-dark', detectDarkTheme());
+  }
+  function watchTheme() {
+    applyTheme();
+    try {
+      const observer = new MutationObserver(applyTheme);
+      observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme', 'theme', 'style'] });
+      if (document.body) observer.observe(document.body, { attributes: true, attributeFilter: ['class', 'data-theme', 'theme', 'style'] });
+    } catch (error) { warn('主题监听失败', error); }
+    if (window.matchMedia) {
+      const query = window.matchMedia('(prefers-color-scheme: dark)');
+      if (query.addEventListener) query.addEventListener('change', applyTheme);
+      else if (query.addListener) query.addListener(applyTheme);
+    }
+  }
+
+  const store = {
+    get(key, fallback) {
+      try {
+        const raw = window.localStorage.getItem(key);
+        return raw == null ? fallback : JSON.parse(raw);
+      } catch (error) { warn('读取本地设置失败 ' + key, error); return fallback; }
+    },
+    set(key, value) {
+      try { window.localStorage.setItem(key, JSON.stringify(value)); }
+      catch (error) { warn('保存本地设置失败 ' + key, error); }
+    }
+  };
+
+  const state = {
+    generation: 0,
+    days: [],
+    date: { ms: null, text: '' },
+    history: [],
+    ext: {},
+    rules: [],
+    ladder: null,
+    stage: null,
+    watch: { items: [], groups: {} },
+    anomalies: [],
+    seenAnomaly: {},
+    review: null,
+    period: 'day',
+    pane: 'pre'
+  };
+
+  function mapLimit(items, limit, worker) {
+    return new Promise(resolve => {
+      const out = new Array(items.length);
+      let cursor = 0, running = 0, done = 0;
+      const step = () => {
+        while (running < limit && cursor < items.length) {
+          const index = cursor++;
+          running++;
+          Promise.resolve(worker(items[index], index)).then(value => { out[index] = value; })
+            .catch(() => { out[index] = null; })
+            .then(() => { running--; done++; if (done === items.length) resolve(out); else step(); });
+        }
+        if (items.length === 0) resolve(out);
+      };
+      step();
+    });
+  }
+
+  async function hub(promise) { return dataHubPayload(await promise); }
+
+  async function searchGlobal(keywords) {
+    return client.searchCandidates({ datasetId: 'global-indicators', keywords, assetPolicy: 'all-registered', candidateLimit: 100, pageSize: 50, maxPages: 2 });
+  }
+  async function searchAShare(keywords) {
+    return client.searchCandidates({ datasetId: 'a-share-universe', keywords, assetPolicy: 'a-share-or-industry-index', candidateLimit: 100, pageSize: 50, maxPages: 2 });
+  }
+  function pickCandidate(result, test, keyword) {
+    const records = (result && result.records) || [];
+    const matched = records.filter(record => record && typeof record.name === 'string' && test.test(record.name));
+    if (matched.length !== 1) return null;
+    const record = matched[0];
+    if (!record.market || !record.code) return null;
+    return { market: String(record.market), code: String(record.code), name: String(record.name), keyword };
+  }
+  const picked = new Map();
+  function pickFromRecords(result, keyword, test) {
+    if (!result) return null;
+    const cached = picked.get(keyword);
+    if (cached !== undefined) return cached;
+    const hit = pickCandidate(result, test, keyword);
+    picked.set(keyword, hit);
+    return hit;
+  }
+
+  function sessionArgs(datasetId, securities, onState) {
+    return {
+      datasetId, securities, fields: FIELDS.slice(), subscribe: false, timeoutMs: 10000,
+      onState: dataset => { try { onState(dataset); } catch (error) { warn(datasetId + ' 渲染失败', error); } }
+    };
+  }
+  function quoteOf(records, identity) {
+    if (!records || !identity) return null;
+    const bucket = records[identity.market + identity.code] || records[identity.code];
+    if (!bucket) return null;
+    const read = id => {
+      const raw = bucket[String(id)];
+      if (raw == null || raw === '') return null;
+      const value = Number(raw);
+      return isFinite(value) ? value : null;
+    };
+    return {
+      latest: read(FIELD.latest), changeRate: read(FIELD.changeRate), preClose: read(FIELD.preClose),
+      high: read(FIELD.high), low: read(FIELD.low), volume: read(FIELD.volume),
+      volumeRatio: read(FIELD.volumeRatio), turnoverRate: read(FIELD.turnoverRate), sealAmount: read(FIELD.sealAmount)
+    };
+  }
+  function recordsToMap(dataset) {
+    const out = {};
+    if (!dataset || !dataset.records) return out;
+    Object.keys(dataset.records).forEach(key => { out[key] = dataset.records[key]; });
+    return out;
+  }
+  function isFinal(dataset) {
+    if (!dataset) return true;
+    return dataset.status !== 'loading';
+  }
+  function marketSuffix(market) {
+    const text = String(market || '').toUpperCase();
+    if (text.indexOf('SZ') >= 0) return 'SZ';
+    if (text.indexOf('BJ') >= 0) return 'BJ';
+    if (text.indexOf('SH') >= 0) return 'SH';
+    return '';
+  }
+  function thscodeOf(market, code) {
+    const suffix = marketSuffix(market);
+    return suffix ? String(code) + '.' + suffix : String(code);
+  }
+
+  function limitRatio(item) {
+    const name = String(item.name || '');
+    const code = String(item.code || item.ticker || '');
+    if (/ST/i.test(name)) return 0.05;
+    if (/^(30|68)/.test(code)) return 0.2;
+    return 0.1;
+  }
+  function limitPriceOf(quote, ratio) {
+    if (!quote || quote.preClose == null) return null;
+    return Math.round(quote.preClose * (1 + ratio) * 100) / 100;
+  }
+
+  /* ---------------- 交易日与日期上下文 ---------------- */
+
+  async function loadCalendar() {
+    const payload = await hub(requestDataHubDatahubTradingCalendar({}));
+    const list = (payload.item || []).slice()
+      .filter(row => row && Number.isFinite(Number(row.date_ms)))
+      .map(row => ({ ms: Number(row.date_ms), text: String(row.date || '') }))
+      .sort((a, b) => b.ms - a.ms);
+    return list;
+  }
+  function buildDateSelect() {
+    const select = el('date-sel');
+    select.innerHTML = state.days.slice(0, 60).map(day => '<option value="' + day.ms + '">' + esc(day.text) + '</option>').join('');
+    select.value = String(state.date.ms);
+  }
+  function moveDate(offset) {
+    const index = state.days.findIndex(day => day.ms === state.date.ms);
+    const next = state.days[index + offset];
+    if (!next) return;
+    selectDay(next.ms);
+  }
+  function selectDay(ms) {
+    const day = state.days.find(item => item.ms === ms);
+    if (!day) return;
+    state.date = { ms: day.ms, text: day.text };
+    const select = el('date-sel');
+    if (select) select.value = String(ms);
+    loadAll();
+  }
+
+  /* ---------------- 情绪数据 ---------------- */
+
+  async function loadDayEmotion(day) {
+    const [up, down, brk] = await Promise.all([
+      hub(requestDataHubDatahubLimitUpPool({ date_ms: day.ms, page: 1, size: 60, sort_field: 'continue_day_cnt', sort_dir: 'desc' })),
+      hub(requestDataHubDatahubLimitDownPool({ date_ms: day.ms, page: 1, size: 1, sort_field: 'price_change_ratio_pct', sort_dir: 'asc' })),
+      hub(requestDataHubDatahubLimitBreakPool({ date_ms: day.ms, page: 1, size: 1, sort_field: 'open_times', sort_dir: 'desc' }))
+    ]);
+    const items = (up.item || []).filter(Boolean);
+    const maxBoard = items.reduce((max, item) => Math.max(max, Number(item.continue_day_cnt) || 0), 0);
+    const buckets = {};
+    items.forEach(item => {
+      const level = Number(item.continue_day_cnt) || 1;
+      buckets[level] = (buckets[level] || 0) + 1;
+    });
+    const limitUpTotal = Number((up.pagination && up.pagination.total) || items.length);
+    const limitDownTotal = Number((down.pagination && down.pagination.total) || (down.item || []).length);
+    const breakTotal = Number((brk.pagination && brk.pagination.total) || (brk.item || []).length);
+    const sealRate = (limitUpTotal + breakTotal) > 0 ? limitUpTotal / (limitUpTotal + breakTotal) : null;
+    return { day, items, buckets, maxBoard, limitUpTotal, limitDownTotal, breakTotal, sealRate, amount: null, score: null, stage: null };
+  }
+
+  async function loadAmountSeries(days) {
+    if (!days.length) return {};
+    const start = days[days.length - 1].ms - 12 * 86400000;
+    const end = days[0].ms + 6 * 3600000;
+    const merged = {};
+    await Promise.all(['000001.SH', '399106.SZ'].map(async code => {
+      try {
+        const payload = await hub(requestDataHubIndexPricesHistorical({ thscode: code, interval: '1d', start, end }));
+        (payload.item || []).forEach(row => {
+          const ms = Number(row.date_ms), turnover = num(row.turnover);
+          if (Number.isFinite(ms) && turnover != null) merged[ms] = (merged[ms] || 0) + turnover;
+        });
+      } catch (error) { warn('读取成交额序列失败 ' + code, error); }
+    }));
+    return merged;
+  }
+
+  function computeScore(entry, amountSeries) {
+    const keys = Object.keys(amountSeries).map(Number).sort((a, b) => a - b);
+    let ratioAmount = null;
+    const position = keys.indexOf(entry.day.ms);
+    if (position > 0) {
+      const prev = amountSeries[keys[position - 1]], cur = amountSeries[keys[position]];
+      if (prev > 0 && cur > 0) ratioAmount = (cur - prev) / prev * 100;
+    }
+    entry.amount = num(amountSeries[entry.day.ms]);
+    entry.amountPrev = num(amountSeries[keys[position - 1]]);
+    const diff = entry.limitUpTotal - entry.limitDownTotal;
+    const brokRate = (entry.limitUpTotal + entry.breakTotal) > 0 ? entry.breakTotal / (entry.limitUpTotal + entry.breakTotal) : null;
+    entry.brokRate = brokRate;
+    const factors = [
+      { name: '涨停家数', raw: entry.limitUpTotal, score: clamp01(entry.limitUpTotal / 80), weight: 0.28 },
+      { name: '涨停跌停差', raw: diff, score: clamp01((diff + 40) / 80), weight: 0.18 },
+      { name: '封板质量', raw: brokRate == null ? null : (1 - brokRate) * 100, score: brokRate == null ? null : clamp01(1 - brokRate), weight: 0.18, unit: '%' },
+      { name: '连板高度', raw: entry.maxBoard, score: clamp01(entry.maxBoard / 6), weight: 0.18 },
+      { name: '成交额环比', raw: ratioAmount, score: ratioAmount == null ? null : clamp01((ratioAmount + 15) / 30), weight: 0.18, unit: '%' }
+    ].filter(factor => factor.score != null);
+    const weightSum = factors.reduce((sum, factor) => sum + factor.weight, 0);
+    const score = weightSum > 0 ? factors.reduce((sum, factor) => sum + factor.score * factor.weight, 0) / weightSum * 100 : null;
+    entry.factors = factors.map(factor => Object.assign({}, factor, { weight: factor.weight / weightSum }));
+    entry.score = score == null ? null : Math.round(score * 10) / 10;
+    return entry;
+  }
+
+  function stageOf(entry, prev) {
+    if (entry.score == null) return { name: null, basis: '当日情绪分项不足，暂不判定阶段' };
+    const brokRate = entry.brokRate == null ? 0 : entry.brokRate;
+    const drop = prev && prev.score != null && entry.score < prev.score;
+    let name;
+    if (entry.score <= 20) name = '冰点';
+    else if (drop && brokRate > 0.35) name = '退潮';
+    else if (brokRate > 0.35) name = '分歧';
+    else if (entry.score <= 40) name = '修复';
+    else if (entry.score <= 62) name = '发酵';
+    else name = '高潮';
+    const basis = '情绪分 ' + entry.score + ' 分，炸板率 ' + (brokRate * 100).toFixed(0) + '%，'
+      + (prev && prev.score != null ? ('较前一交易日' + (entry.score >= prev.score ? '回升' : '回落') + (Math.abs(entry.score - prev.score)).toFixed(1) + ' 分') : '无前一交易日对照');
+    return { name, basis };
+  }
+
+  async function loadEmotion(historyDays) {
+    const entries = await mapLimit(historyDays, 4, day => loadDayEmotion(day).catch(error => { warn('情绪数据读取失败 ' + day.text, error); return null; }));
+    const valid = entries.filter(Boolean);
+    const amountSeries = await loadAmountSeries(historyDays);
+    valid.forEach(entry => computeScore(entry, amountSeries));
+    const asc = valid.slice().reverse();
+    asc.forEach((entry, index) => {
+      const stage = stageOf(entry, index > 0 ? asc[index - 1] : null);
+      entry.stage = stage.name;
+      entry.stageBasis = stage.basis;
+    });
+    return asc.slice().reverse();
+  }
+
+  function findEntry(dateMs) {
+    return state.history.find(entry => entry.day.ms === dateMs) || null;
+  }
+
+  /* ---------------- 外部指标 ---------------- */
+
+  async function loadExternal() {
+    const out = {};
+    let overview = null;
+    try {
+      overview = await requestMarketOverview({ market: 'usshare', includeHotIndex: true, includeLimit: false, includeMarketState: false });
+    } catch (error) { warn('读取美股指数失败', error); }
+    let hkOverview = null;
+    try {
+      hkOverview = await requestMarketOverview({ market: 'hkshare', includeHotIndex: true, includeLimit: false, includeMarketState: false });
+    } catch (error) { warn('读取港股指数失败', error); }
+    const overviewRows = []
+      .concat(overview && overview.hotIndex ? overview.hotIndex : [])
+      .concat(hkOverview && hkOverview.hotIndex ? hkOverview.hotIndex : []);
+    const overviewMap = {};
+    Object.keys(OVERVIEW_ALIAS).forEach(key => {
+      const hit = overviewRows.find(row => row && OVERVIEW_ALIAS[key].test(String(row.name || '')));
+      if (hit && num(hit.risePercent) != null) overviewMap[key] = { name: String(hit.name), changeRate: num(hit.risePercent) };
+    });
+
+    const keywords = EXT_OBJECTS.map(item => item.kw);
+    let search = null;
+    try { search = await searchGlobal(keywords); }
+    catch (error) { warn('外部标的检索失败', error); }
+    const identities = [];
+    const identityOf = {};
+    EXT_OBJECTS.forEach(item => {
+      const hit = search ? pickFromRecords(search, item.kw, item.test) : null;
+      if (hit) { identities.push({ market: hit.market, code: hit.code }); identityOf[item.key] = hit; }
+      else if (overviewMap[item.key]) out[item.key] = { name: item.name, unit: item.unit, value: null, changeRate: overviewMap[item.key].changeRate, src: overviewMap[item.key].name };
+    });
+
+    if (identities.length) {
+      await new Promise(resolve => {
+        const session = client.createQuoteSession(sessionArgs('global-indicators', identities, dataset => {
+          const records = recordsToMap(dataset);
+          EXT_OBJECTS.forEach(item => {
+            const identity = identityOf[item.key];
+            if (!identity) return;
+            const quote = quoteOf(records, identity);
+            if (!quote || quote.latest == null) return;
+            out[item.key] = { name: item.name, unit: item.unit, value: quote.latest, changeRate: quote.changeRate, src: identity.name };
+          });
+          renderExternal();
+          if (isFinal(dataset)) resolve();
+        }));
+        session.refresh().catch(error => { warn('外部指标行情读取失败', error); resolve(); });
+      });
+    }
+    state.ext = out;
+    renderExternal();
+  }
+
+  function renderExternal() {
+    const keys = EXT_OBJECTS.filter(item => state.ext[item.key]);
+    const grid = el('ext-grid');
+    if (!grid) return;
+    if (!keys.length) {
+      hide(el('m-ext'));
+      el('ext-verdict').textContent = '隔夜外部环境数据暂不可用，映射结论按A股内部数据独立给出。';
+      renderMap();
+      return;
+    }
+    show(el('m-ext'));
+    grid.innerHTML = keys.map(item => {
+      const row = state.ext[item.key];
+      const suffix = item.key === 'us10y' ? '%' : item.unit;
+      return '<div class="kv">'
+        + '<span class="kv-k">' + esc(item.name) + (row.src && row.src !== item.name ? ' · ' + esc(row.src) : '') + '</span>'
+        + '<span class="kv-v ' + cls(row.changeRate) + '"' + tipAttr(row.src + ' 最新值 ' + (row.value == null ? '不可用' : row.value) + '\n涨跌幅 ' + pct(row.changeRate)) + '>'
+        + (row.value == null ? '--' : fmtPrice(row.value)) + suffix + ' <span style="font-size:11px">' + pct(row.changeRate) + '</span></span></div>';
+    }).join('');
+    const rising = keys.filter(item => state.ext[item.key].changeRate > 0).length;
+    const falling = keys.filter(item => state.ext[item.key].changeRate < 0).length;
+    const direction = rising === falling ? '分化' : rising > falling ? '偏多' : '偏空';
+    state.overseas = direction + '（' + rising + ' 涨 / ' + falling + ' 跌）';
+    el('ext-verdict').innerHTML = '隔夜外部环境' + esc(direction) + '：' + rising + ' 项上涨、' + falling + ' 项下跌。'
+      + '<span class="sub">已取得 ' + keys.length + ' 项外部指标真实报价，未取得报价的对象不参与映射结论。</span>';
+    renderMap();
+  }
+
+  /* ---------------- 映射与规则 ---------------- */
+
+  function loadRules() {
+    const saved = store.get('scs.mapping.rules', null);
+    state.rules = Array.isArray(saved) && saved.length ? saved : DEFAULT_RULES.slice();
+  }
+  function saveRules() { store.set('scs.mapping.rules', state.rules); }
+
+  function boardIdentityOf(name) {
+    const list = state.boardDirectory || [];
+    const hit = list.find(item => item.name === name || item.name.indexOf(name) >= 0);
+    return hit || null;
+  }
+
+  async function loadBoardDirectory() {
+    try {
+      const payload = await hub(requestDataHubThsIndexList({ tag: 'industry' }));
+      state.boardDirectory = (payload.item || []).map(row => ({ name: String(row.name || ''), code: String(row.thscode || '') })).filter(row => row.name && row.code);
+      try {
+        const concept = await hub(requestDataHubThsIndexList({ tag: 'cn_concept' }));
+        (concept.item || []).forEach(row => {
+          if (row && row.name && row.thscode) state.boardDirectory.push({ name: String(row.name), code: String(row.thscode) });
+        });
+      } catch (error) { warn('读取概念板块目录失败', error); }
+    } catch (error) { warn('读取行业板块目录失败', error); }
+  }
+
+  function activeSourceNames() {
+    const names = {}; EXT_OBJECTS.forEach(item => { names[item.name] = item.key; });
+    return names;
+  }
+
+  function buildMapRows() {
+    const sourceNames = activeSourceNames();
+    const rows = [];
+    state.rules.forEach(rule => {
+      const key = sourceNames[rule.src];
+      const ext = key ? state.ext[key] : null;
+      const changeRate = ext ? ext.changeRate : null;
+      const sign = rule.dir === '反向' ? -1 : 1;
+      const strength = changeRate == null ? null : Math.abs(changeRate * (rule.weight == null ? 1 : rule.weight) * sign);
+      rows.push({
+        rule, ext, changeRate,
+        direction: changeRate == null ? rule.dir : (changeRate * sign > 0 ? '利好' : changeRate * sign < 0 ? '利空' : '中性'),
+        strength: strength == null ? 0 : Math.round(strength * 100) / 100,
+        board: rule.board,
+        stocks: Array.isArray(rule.stocks) ? rule.stocks : String(rule.stocks || '').split(/[,，\s]+/).filter(Boolean)
+      });
+    });
+    return rows.sort((a, b) => b.strength - a.strength);
+  }
+
+  function mapCardHtml(row) {
+    const key = row.ext ? (row.ext.src || '') : '';
+    const stockText = row.stocks.map(name => {
+      const hit = (state.stockQuotes || {})[name];
+      if (!hit) return '<span class="tagx">' + esc(name) + '</span>';
+      return '<span class="tagx">' + esc(name) + ' <b class="' + cls(hit.changeRate) + '">' + pct(hit.changeRate) + '</b></span>';
+    }).join(' ');
+    const boardHit = (state.boardQuotes || {})[row.board];
+    return '<div class="map-card' + (row.strength >= 1 ? ' lead' : '') + '" data-board="' + esc(row.board) + '">'
+      + '<div class="map-h"><span class="dir ' + (row.direction === '利好' ? 'up' : row.direction === '利空' ? 'down' : 'flat') + '">' + esc(row.direction) + '</span>'
+      + '<span>' + esc(row.rule.src) + '</span><span class="arrow">-&gt;</span><span>' + esc(row.board) + '</span>'
+      + '<span class="muted" style="margin-left:auto;font-size:11px">强度 ' + row.strength.toFixed(2) + '</span></div>'
+      + '<div class="map-b">' + esc(row.rule.logic || '') + '</div>'
+      + '<div class="map-f"><span>代表个股 ' + (stockText || '未设置') + '</span>'
+      + (boardHit ? '<span>板块 ' + pct(boardHit.changeRate) + '</span>' : '')
+      + (row.changeRate == null ? '<span>外部对象无报价，仅按规则方向提示</span>' : '<span>' + esc(key) + ' ' + pct(row.changeRate) + '</span>')
+      + '</div></div>';
+  }
+
+  async function renderMap() {
+    if (!state.rules || !state.rules.length) { hide(el('m-map')); return; }
+    const rows = buildMapRows();
+    const shown = rows.filter(row => row.changeRate != null);
+    const pool = shown.length ? shown : rows;
+    const top = pool.slice(0, 3), rest = pool.slice(3);
+    el('map-top').innerHTML = top.map(mapCardHtml).join('');
+    el('map-rest').innerHTML = rest.map(mapCardHtml).join('');
+    el('map-rest-wrap').hidden = rest.length === 0;
+    show(el('m-map'));
+    const bullish = pool.filter(row => row.direction === '利好').length;
+    const bearish = pool.filter(row => row.direction === '利空').length;
+    el('map-verdict').innerHTML = '今日影响最大的方向是 ' + esc(top.length ? top[0].board : '待定') + '：'
+      + bullish + ' 条利好映射、' + bearish + ' 条利空映射。'
+      + '<span class="sub">共 ' + pool.length + ' 条规则参与映射，其中 ' + shown.length + ' 条有真实外盘报价；点击板块可下钻成分股。</span>';
+    el('map-scope').textContent = state.date.text || '';
+    await loadMapQuotes(top, rest, rows);
+  }
+
+  async function loadMapQuotes(top, rest, rows) {
+    const boardNames = [];
+    rows.forEach(row => { if (row.board && boardNames.indexOf(row.board) < 0) boardNames.push(row.board); });
+    const boardCodes = [];
+    boardNames.forEach(name => {
+      const hit = boardIdentityOf(name);
+      if (hit) boardCodes.push(hit.code);
+    });
+    if (boardCodes.length) {
+      try {
+        const payload = await hub(requestDataHubIndexPricesSnapshot({ thscodes: boardCodes.join(',') }));
+        const map = {};
+        (payload.item || []).forEach(row => {
+          const code = String(row.thscode || '');
+          const hit = boardNames.find(name => { const board = boardIdentityOf(name); return board && board.code === code; });
+          if (hit) map[hit] = { changeRate: num(row.price_change_ratio_pct), turnover: num(row.turnover) };
+        });
+        state.boardQuotes = map;
+      } catch (error) { warn('读取板块涨跌幅失败', error); }
+    }
+    const stockNames = [];
+    rows.forEach(row => row.stocks.forEach(name => { if (stockNames.indexOf(name) < 0) stockNames.push(name); }));
+    if (!stockNames.length) return;
+    let search = null;
+    try { search = await searchAShare(stockNames); }
+    catch (error) { warn('代表个股检索失败', error); return; }
+    const identities = [];
+    const nameOf = {};
+    stockNames.forEach(name => {
+      const records = (search && search.records) || [];
+      const matched = records.filter(record => record && record.name === name);
+      if (matched.length === 1 && matched[0].market && matched[0].code) {
+        identities.push({ market: String(matched[0].market), code: String(matched[0].code) });
+        nameOf[String(matched[0].market) + String(matched[0].code)] = name;
+      }
+    });
+    if (!identities.length) return;
+    await new Promise(resolve => {
+      const session = client.createQuoteSession(sessionArgs('board-representatives', identities, dataset => {
+        const records = recordsToMap(dataset);
+        const out = {};
+        identities.forEach(identity => {
+          const quote = quoteOf(records, identity);
+          const name = nameOf[identity.market + identity.code];
+          if (quote && name) out[name] = quote;
+        });
+        state.stockQuotes = out;
+        el('map-top').innerHTML = top.map(mapCardHtml).join('');
+        el('map-rest').innerHTML = rest.map(mapCardHtml).join('');
+        if (isFinal(dataset)) resolve();
+      }));
+      session.refresh().catch(error => { warn('代表个股行情读取失败', error); resolve(); });
+    });
+  }
+
+  function renderRules() {
+    const body = el('rule-list');
+    if (!body) return;
+    body.innerHTML = state.rules.map((rule, index) => '<tr>'
+      + '<td>' + esc(rule.src) + '</td><td>' + esc(rule.board) + '</td><td>' + esc(rule.dir) + '</td>'
+      + '<td class="num">' + esc(rule.weight == null ? 1 : rule.weight) + '</td>'
+      + '<td>' + esc((Array.isArray(rule.stocks) ? rule.stocks : [rule.stocks]).filter(Boolean).join(' / ')) + '</td>'
+      + '<td>' + esc(rule.logic || '') + '</td>'
+      + '<td><button class="btn" type="button" data-rule-del="' + index + '">删除</button></td></tr>').join('');
+  }
+
+  function addRule() {
+    const src = el('rule-src').value.trim();
+    const board = el('rule-board').value.trim();
+    if (!src || !board) { warn('规则需要外部对象与A股板块'); return; }
+    state.rules.push({
+      id: 'r-' + Date.now(), src, board,
+      dir: el('rule-dir').value,
+      weight: Number(el('rule-weight').value) || 1,
+      logic: el('rule-logic').value.trim(),
+      stocks: el('rule-stocks').value.split(/[,，\s]+/).filter(Boolean)
+    });
+    saveRules();
+    renderRules();
+    renderMap();
+    el('rule-src').value = ''; el('rule-board').value = ''; el('rule-logic').value = ''; el('rule-stocks').value = '';
+  }
+
+  async function drillBoard(name) {
+    const target = el('map-drill');
+    if (!target) return;
+    if (target.hidden === false && target.dataset.board === name) { hide(target); return; }
+    const board = boardIdentityOf(name);
+    if (!board) { warn('板块目录中没有匹配 ' + name); return; }
+    target.dataset.board = name;
+    target.innerHTML = '<div class="muted">正在读取 ' + esc(name) + ' 成分股…</div>';
+    show(target);
+    try {
+      const payload = await hub(requestDataHubThsIndexConstituents({ thscode: board.code }));
+      const rows = (payload.item || []).slice(0, 30);
+      if (!rows.length) { hide(target); return; }
+      const identities = rows.filter(row => row.market && row.code).map(row => ({ market: String(row.market), code: String(row.code) }));
+      const render = quotes => {
+        target.innerHTML = '<div class="row"><b>' + esc(name) + '</b><span class="muted">成分股 ' + (payload.item || []).length + ' 只，展示前 ' + rows.length + ' 只</span></div>'
+          + '<div class="scroll-y"><table class="tbl"><thead><tr><th>名称</th><th>代码</th><th class="num">现价</th><th class="num">涨跌幅</th></tr></thead><tbody>'
+          + rows.map(row => {
+            const quote = quotes ? quotes[String(row.market) + String(row.code)] : null;
+            return '<tr><td>' + esc(row.name) + '</td><td class="muted">' + esc(row.ticker || row.thscode) + '</td>'
+              + '<td class="num">' + (quote ? fmtPrice(quote.latest) : '--') + '</td>'
+              + '<td class="num ' + cls(quote && quote.changeRate) + '">' + (quote ? pct(quote.changeRate) : '--') + '</td></tr>';
+          }).join('') + '</tbody></table></div>';
+      };
+      render(null);
+      if (!identities.length) return;
+      await new Promise(resolve => {
+        const session = client.createQuoteSession(sessionArgs('board-constituents', identities, dataset => {
+          const records = recordsToMap(dataset);
+          const quotes = {};
+          identities.forEach(identity => { quotes[identity.market + identity.code] = quoteOf(records, identity); });
+          render(quotes);
+          if (isFinal(dataset)) resolve();
+        }));
+        session.refresh().catch(error => { warn('成分股行情读取失败', error); resolve(); });
+      });
+    } catch (error) {
+      warn('读取板块成分股失败 ' + name, error);
+      hide(target);
+    }
+  }
+
+  /* ---------------- 情绪渲染 ---------------- */
+
+  function gaugeSvg(score) {
+    const value = score == null ? 0 : Math.max(0, Math.min(100, score));
+    const theta = Math.PI * (1 - value / 100);
+    const x = 70 + 54 * Math.cos(theta), y = 70 - 54 * Math.sin(theta);
+    const stroke = score == null ? 'var(--c-flat)' : (state.stage && STAGE_COLOR[state.stage] ? STAGE_COLOR[state.stage] : 'var(--c-accent)');
+    return '<svg class="gauge" viewBox="0 0 140 84" role="img" aria-label="综合情绪分">'
+      + '<path d="M16 70 A54 54 0 0 1 124 70" fill="none" stroke="var(--c-line)" stroke-width="10" stroke-linecap="round"></path>'
+      + '<path d="M16 70 A54 54 0 0 1 ' + x.toFixed(1) + ' ' + y.toFixed(1) + '" fill="none" stroke="' + stroke + '" stroke-width="10" stroke-linecap="round"></path>'
+      + '<text class="gauge-num" x="70" y="58" text-anchor="middle">' + (score == null ? '--' : score.toFixed(0)) + '</text>'
+      + '<text class="gauge-cap" x="70" y="72" text-anchor="middle">综合情绪分</text></svg>';
+  }
+
+  function renderEmotion() {
+    const entry = findEntry(state.date.ms);
+    if (!entry || entry.score == null) {
+      hide(el('m-emo')); hide(el('m-core'));
+      el('emo-verdict').textContent = '当日情绪分项数据暂不可用。';
+      return;
+    }
+    show(el('m-emo')); show(el('m-core'));
+    state.stage = entry.stage;
+    el('emo-gauge').innerHTML = gaugeSvg(entry.score);
+    el('emo-stage').innerHTML = '<span style="color:' + tagColor(entry.stage) + '">' + esc(entry.stage || '待判定') + '</span>';
+    el('emo-score').textContent = entry.score + ' 分';
+    el('emo-basis').innerHTML = entry.factors.map(factor => '<div><span>' + esc(factor.name) + '</span><span>'
+      + (factor.raw == null ? '--' : (typeof factor.raw === 'number' ? (Math.round(factor.raw * 100) / 100) : factor.raw)) + (factor.unit || '')
+      + ' · 权重 ' + (factor.weight * 100).toFixed(0) + '%</span></div>').join('');
+    const up = entry.limitUpTotal, down = entry.limitDownTotal;
+    el('emo-verdict').innerHTML = '当前情绪处于 ' + esc(entry.stage || '待判定') + '：涨停 ' + up + ' 家、跌停 ' + down + ' 家，连板最高 ' + entry.maxBoard + ' 板。'
+      + '<span class="sub">' + esc(entry.stageBasis) + '</span>';
+    el('emo-scope').textContent = state.date.text || '';
+
+    const distrib = Object.keys(entry.buckets).map(Number).sort((a, b) => a - b)
+      .filter(level => level >= 2)
+      .map(level => level + '板 ' + entry.buckets[level] + '家').join(' / ');
+    const firstBoard = entry.buckets[1] || 0;
+    const promote = state.history.length > 1
+      ? (() => {
+          const index = state.history.findIndex(item => item.day.ms === entry.day.ms);
+          const prev = state.history[index + 1];
+          if (!prev || !prev.limitUpTotal) return null;
+          const multi = Object.keys(entry.buckets).map(Number).filter(level => level >= 2).reduce((sum, level) => sum + entry.buckets[level], 0);
+          return multi / prev.limitUpTotal * 100;
+        })() : null;
+    const prevLimitAvg = entry.prevLimitAvg;
+    const cells = [
+      { k: '涨停家数', v: up + ' 家' },
+      { k: '跌停家数', v: down + ' 家' },
+      { k: '炸板率', v: entry.brokRate == null ? '--' : (entry.brokRate * 100).toFixed(1) + '%' },
+      { k: '连板最高高度', v: entry.maxBoard + ' 板' },
+      { k: '连板梯队分布', v: distrib || '--' },
+      { k: '昨日涨停今日平均涨幅', v: prevLimitAvg == null ? '--' : pct(prevLimitAvg) },
+      { k: '连板晋级率', v: promote == null ? '--' : promote.toFixed(1) + '%' },
+      { k: '市场成交额', v: fmtYi(entry.amount) }
+    ];
+    el('emo-core').innerHTML = cells.map(cell => '<div class="kv"><span class="kv-k">' + esc(cell.k) + '</span><span class="kv-v">' + esc(cell.v) + '</span></div>').join('');
+    el('core-scope').textContent = state.date.text || '';
+    renderTrend();
+    renderLadder(entry);
+  }
+
+  function renderTrend() {
+    const asc = state.history.slice().reverse().filter(entry => entry.score != null);
+    const box = el('emo-chart');
+    if (!box) return;
+    if (asc.length < 2) { hide(el('m-trend')); return; }
+    show(el('m-trend'));
+    const width = 960, height = 150, padL = 34, padR = 16, padT = 12, padB = 22;
+    const innerW = width - padL - padR, innerH = height - padT - padB;
+    const xOf = index => padL + (asc.length === 1 ? innerW / 2 : innerW * index / (asc.length - 1));
+    const yOf = score => padT + innerH * (1 - score / 100);
+    const points = asc.map((entry, index) => ({ x: xOf(index), y: yOf(entry.score), entry }));
+    const line = points.map((point, index) => (index ? 'L' : 'M') + point.x.toFixed(1) + ' ' + point.y.toFixed(1)).join(' ');
+    const marks = points.filter((point, index) => index === 0 || (asc[index - 1].stage !== point.entry.stage));
+    box.innerHTML = '<svg class="chart" viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="none">'
+      + [0, 25, 50, 75, 100].map(value => '<line x1="' + padL + '" x2="' + (width - padR) + '" y1="' + yOf(value).toFixed(1) + '" y2="' + yOf(value).toFixed(1) + '" stroke="var(--c-line)" stroke-width="1"></line>'
+        + '<text x="4" y="' + (yOf(value) + 3).toFixed(1) + '" font-size="9" fill="var(--c-text3)">' + value + '</text>').join('')
+      + '<path d="' + line + '" fill="none" stroke="var(--c-accent)" stroke-width="2"></path>'
+      + points.map(point => '<circle cx="' + point.x.toFixed(1) + '" cy="' + point.y.toFixed(1) + '" r="' + (marks.indexOf(point) >= 0 ? 4 : 2.5) + '" fill="' + (marks.indexOf(point) >= 0 ? tagColor(point.entry.stage) : 'var(--c-accent)') + '"></circle>').join('')
+      + points.map(point => '<rect x="' + (point.x - 6).toFixed(1) + '" y="' + padT + '" width="12" height="' + innerH + '" fill="transparent" data-day="' + point.entry.day.ms + '"'
+        + tipAttr(point.entry.day.text + '\n情绪分 ' + point.entry.score + ' 分\n阶段 ' + (point.entry.stage || '待判定') + '\n涨停 ' + point.entry.limitUpTotal + ' 家 / 跌停 ' + point.entry.limitDownTotal + ' 家') + ' style="cursor:pointer"></rect>').join('')
+      + '</svg>';
+  }
+
+  function ladderStatus(stock, entry) {
+    const names = { two_board: 2, three_board: 3, four_board: 4, five_board: 5, six_board: 6, seven_over: 7 };
+    const level = names[stock.__level] || Number(stock.board_num) || 2;
+    if (stock.seal_nextday === true) return level + '板封住，次日继续封板';
+    if (stock.seal_nextday === false) return level + '板次日炸板';
+    return '封板';
+  }
+
+  function renderLadder(entry) {
+    const box = el('ladder-body');
+    if (!box) return;
+    const rows = [];
+    const caps = el('ladder-caps');
+    const ladder = state.ladder;
+    if (ladder && (state.date.ms == null || (state.days[0] && state.date.ms === state.days[0].ms))) {
+      const boardMap = { two_board: '二板', three_board: '三板', four_board: '四板', five_board: '五板', six_board: '六板', seven_over: '七板及以上' };
+      const first = (ladder.item || [])[0];
+      if (first && first.boards) {
+        Object.keys(boardMap).forEach(key => {
+          (first.boards[key] || []).forEach(stock => {
+            rows.push({
+              level: boardMap[key], name: stock.name, code: stock.thscode,
+              theme: themeOf(stock.thscode, entry), status: ladderStatus(Object.assign({ __level: key }, stock), entry),
+              seal: null, count: (first.boards[key] || []).length
+            });
+          });
+        });
+      }
+      if (ladder.window && ladder.window.board_caps) {
+        const capsMap = ladder.window.board_caps;
+        caps.innerHTML = Object.keys(boardMap).filter(key => capsMap[key]).map(key => '<div><span>' + boardMap[key] + '</span><span>' + capsMap[key] + ' 家</span></div>').join('');
+      }
+    } else if (entry && entry.items && entry.items.length) {
+      const label = level => level >= 7 ? '七板及以上' : ({ 2: '二板', 3: '三板', 4: '四板', 5: '五板', 6: '六板' }[level] || (level + '板'));
+      const grouped = {};
+      entry.items.filter(item => (Number(item.continue_day_cnt) || 0) >= 2).forEach(item => {
+        const level = Number(item.continue_day_cnt) || 2;
+        const name = label(level);
+        grouped[name] = grouped[name] || [];
+        grouped[name].push(item);
+      });
+      const order = ['二板', '三板', '四板', '五板', '六板', '七板及以上'];
+      order.forEach(name => {
+        (grouped[name] || []).forEach(item => rows.push({
+          level: name, name: item.name, code: item.thscode,
+          theme: item.limit_up_reason || '未标注', status: '封板 · ' + String(item.limit_up_time || '').slice(-5),
+          seal: num(item.seal_money), count: (grouped[name] || []).length
+        }));
+      });
+      caps.innerHTML = order.filter(name => grouped[name]).map(name => '<div><span>' + name + '</span><span>' + grouped[name].length + ' 家</span></div>').join('');
+    }
+    if (!rows.length) { hide(el('m-ladder')); return; }
+    show(el('m-ladder'));
+    box.innerHTML = rows.map(row => '<tr><td>' + esc(row.level) + '</td><td>' + esc(row.name) + '</td>'
+      + '<td>' + esc(row.theme) + '</td><td>' + esc(row.status) + '</td>'
+      + '<td class="num">' + (row.seal == null ? '--' : fmtYi(row.seal)) + '</td>'
+      + '<td class="num">' + (row.count == null ? '--' : row.count) + '</td></tr>').join('');
+    el('ladder-scope').textContent = (state.date.text || '') + ' · 共 ' + rows.length + ' 只连板';
+  }
+
+  function themeOf(thscode, entry) {
+    if (!entry || !entry.items) return '未标注';
+    const hit = entry.items.find(item => item.thscode === thscode);
+    return (hit && hit.limit_up_reason) || '未标注';
+  }
+
+  /* ---------------- 监控范围与盘中异动 ---------------- */
+
+  function thresholdValues() {
+    return store.get('scs.anomaly.thresholds', { rise: 5, fall: 5, volume: 2, deviate: 3 });
+  }
+  function fillThresholds() {
+    const value = thresholdValues();
+    el('thr-rise').value = value.rise; el('thr-fall').value = value.fall;
+    el('thr-vol').value = value.volume; el('thr-dev').value = value.deviate;
+  }
+
+  async function loadWatchScope() {
+    const groups = {}; const items = []; const index = {};
+    const local = store.get('scs.watch.extra', []);
+    try {
+      const payload = await requestUserSectors({ sectorId: '0', includeStocks: true });
+      const stocks = Array.isArray(payload.stocks) ? payload.stocks : [];
+      groups['自选股'] = [];
+      stocks.forEach(stock => {
+        if (!stock || !stock.market || !stock.code) return;
+        const key = stock.market + stock.code;
+        if (index[key]) return;
+        index[key] = true;
+        groups['自选股'].push(key);
+        items.push({ market: String(stock.market), code: String(stock.code), group: '自选股', name: '' });
+      });
+    } catch (error) { warn('读取客户端自选股失败', error); }
+    try {
+      const list = await requestUserSectors({ includeStocks: true });
+      const sectors = Array.isArray(list.sectors) ? list.sectors : [];
+      if (sectors.length) {
+        const detail = await Promise.all(sectors.map(sector => requestUserSectors({ sectorId: sector.sectorId, includeStocks: true }).catch(() => null)));
+        detail.forEach((payload, position) => {
+          if (!payload || !Array.isArray(payload.stocks)) return;
+          const name = sectors[position].sectorName || '自定义板块';
+          groups[name] = [];
+          payload.stocks.forEach(stock => {
+            if (!stock || !stock.market || !stock.code) return;
+            const key = stock.market + stock.code;
+            if (index[key]) return;
+            index[key] = true;
+            groups[name].push(key);
+            items.push({ market: String(stock.market), code: String(stock.code), group: name, name: '' });
+          });
+        });
+      }
+    } catch (error) { warn('读取客户端自定义板块失败', error); }
+    (Array.isArray(local) ? local : []).forEach(stock => {
+      if (!stock || !stock.market || !stock.code) return;
+      const key = stock.market + stock.code;
+      if (index[key]) return;
+      index[key] = true;
+      const name = stock.group || '本地补充';
+      groups[name] = groups[name] || [];
+      groups[name].push(key);
+      items.push({ market: String(stock.market), code: String(stock.code), group: name, name: stock.name || '' });
+    });
+    state.watch.items = items;
+    state.watch.groups = groups;
+    return items;
+  }
+
+  function renderWatchGroups() {
+    const box = el('watch-groups');
+    if (!box) return;
+    const groups = state.watch.groups || {};
+    const keys = Object.keys(groups).filter(key => groups[key].length);
+    box.innerHTML = state.watch.items.length
+      ? keys.map(key => '<span class="tagx on">' + esc(key) + ' ' + groups[key].length + ' 只</span>').join('')
+      : '<span class="muted">监控范围为空：客户端自选股与自定义板块暂未返回证券。</span>';
+    el('ano-scope').textContent = '共 ' + state.watch.items.length + ' 只 · ' + (state.date.text || '');
+  }
+
+  async function loadWatchQuotes() {
+    const items = state.watch.items;
+    if (!items.length) { state.quotes = {}; return {}; }
+    const identities = items.map(item => ({ market: item.market, code: item.code }));
+    await new Promise(resolve => {
+      const session = client.createQuoteSession(sessionArgs('watch-quotes', identities, dataset => {
+        const records = recordsToMap(dataset);
+        const out = {};
+        items.forEach(item => {
+          const quote = quoteOf(records, item);
+          if (quote) out[item.market + item.code] = quote;
+        });
+        state.quotes = out;
+        state.watch.items.forEach(item => {
+          const bucket = dataset.records && dataset.records[item.market + item.code];
+          if (bucket && typeof bucket[String(FIELD.name)] === 'string') item.name = bucket[String(FIELD.name)];
+        });
+        if (isFinal(dataset)) resolve();
+      }));
+      session.refresh().catch(error => { warn('监控范围行情读取失败', error); resolve(); });
+    });
+    return state.quotes || {};
+  }
+
+  function detectAnomalies() {
+    const thresholds = thresholdValues();
+    const entry = findEntry(state.date.ms);
+    const rows = [];
+    state.watch.items.forEach(item => {
+      const quote = (state.quotes || {})[item.market + item.code];
+      if (!quote || quote.changeRate == null || quote.latest == null) return;
+      const ratio = limitRatio({ name: item.name, code: item.code });
+      const limitPrice = limitPriceOf(quote, ratio);
+      const tags = [];
+      if (limitPrice != null && quote.latest >= limitPrice - 0.001) tags.push({ tag: '封板', kind: 'up' });
+      else if (limitPrice != null && quote.high != null && quote.high >= limitPrice - 0.001) tags.push({ tag: '炸板', kind: 'warn' });
+      if (quote.changeRate >= thresholds.rise) tags.push({ tag: '快速拉升', kind: 'up' });
+      if (quote.changeRate <= -thresholds.fall) tags.push({ tag: '快速下跌', kind: 'down' });
+      if (quote.volumeRatio != null && quote.volumeRatio >= thresholds.volume && quote.changeRate >= 3) tags.push({ tag: '放量突破', kind: 'up' });
+      if (!tags.length) return;
+      rows.push({
+        key: item.market + item.code, market: item.market, code: item.code,
+        name: item.name || item.code, group: item.group,
+        changeRate: quote.changeRate, volumeRatio: quote.volumeRatio,
+        turnoverRate: quote.turnoverRate, sealAmount: quote.sealAmount,
+        tags, detectedAt: clockText(), stale: false
+      });
+    });
+    state.anomalies = rows.sort((a, b) => (b.changeRate || 0) - (a.changeRate || 0));
+    return state.anomalies;
+  }
+
+  const CATEGORY_ORDER = ['个股消息驱动', '资金行为', '板块联动带动', '大盘拖累', '独立异动'];
+
+  async function attributeAnomalies() {
+    const rows = state.anomalies || [];
+    if (!rows.length) return rows;
+    const entry = findEntry(state.date.ms);
+    const indexQuote = state.indexQuote || {};
+    let analysis = {};
+    const analysisCodes = rows.slice(0, 50).map(row => thscodeOf(row.market, row.code)).filter(Boolean);
+    if (analysisCodes.length) {
+      try {
+        const payload = await hub(requestDataHubAnomalyAnalysisStock({ thscodes: analysisCodes.join(',') }));
+        (payload.item || []).forEach(item => { analysis[String(item.thscode)] = item; });
+      } catch (error) { warn('读取异动原因失败', error); }
+    }
+    let dragon = [];
+    try {
+      const payload = await hub(requestDataHubDatahubDragonTigerList({ board_type: 'all' }));
+      dragon = payload.stock_items || [];
+    } catch (error) { warn('读取龙虎榜失败', error); }
+
+    const focus = rows.slice(0, 6);
+    await mapLimit(focus, 3, async row => {
+      const evidence = [];
+      const suggestion = { category: null, conclusion: '', tags: [] };
+      const thscode = thscodeOf(row.market, row.code);
+      const hit = analysis[thscode];
+      if (hit && hit.analysis_content) {
+        evidence.push('异动原因：' + hit.tag_name + ' · ' + hit.analysis_content + (hit.keyword_list && hit.keyword_list.length ? '（关键词：' + hit.keyword_list.join('、') + '）' : ''));
+      }
+      try {
+        const events = await requestStockInfoEvents({ code: row.code, market: row.market, type: 'all', max_count: 3 });
+        const list = [].concat(events.news || [], events.announcements || [], events.courier || []).slice(0, 3);
+        list.forEach(item => evidence.push('资讯：' + item.title));
+        row.links = list.filter(item => /^https?:/i.test(item.url || '')).map(item => ({ title: item.title, url: item.url }));
+      } catch (error) { warn('读取个股资讯失败 ' + row.code, error); }
+      try {
+        const flow = await requestCapitalFlow({ code: row.code, market: row.market });
+        row.mainNet = num(flow.net && flow.net.main);
+        evidence.push('资金：主力净额 ' + (row.mainNet == null ? '--' : fmtSignedYi(row.mainNet * 10000)));
+      } catch (error) { warn('读取资金流失败 ' + row.code, error); }
+      try {
+        const belongs = await requestSecurityBelongs({ code: row.code, market: row.market });
+        const board = (belongs.belongs || []).filter(item => item.category === 'industry' || item.category === 'concept')
+          .filter(item => item.risePercent != null)
+          .sort((a, b) => Math.abs(b.risePercent) - Math.abs(a.risePercent))[0];
+        if (board) {
+          row.boardName = board.name;
+          row.boardRate = board.risePercent;
+          row.deviate = Math.abs(row.changeRate - board.risePercent);
+          evidence.push('板块：' + board.name + ' ' + pct(board.risePercent));
+        }
+      } catch (error) { warn('读取板块归属失败 ' + row.code, error); }
+      const tiger = dragon.find(item => item.thscode === thscode);
+      if (tiger) {
+        row.tigerNet = num(tiger.org_net_value) != null || num(tiger.hot_money_net_value) != null;
+        evidence.push('龙虎榜：机构净额 ' + (tiger.org_net_value == null ? '--' : fmtSignedYi(tiger.org_net_value)) + '，游资净额 ' + (tiger.hot_money_net_value == null ? '--' : fmtSignedYi(tiger.hot_money_net_value)));
+      }
+      const thresholds = thresholdValues();
+      const hasNews = evidence.some(line => line.indexOf('异动原因：') === 0 || line.indexOf('资讯：') === 0);
+      const hasFlow = row.mainNet != null && Math.abs(row.mainNet) >= 3000;
+      const hasBoard = row.boardRate != null && Math.abs(row.boardRate) >= 1 && row.deviate != null && row.deviate < thresholds.deviate;
+      const hasIndex = indexQuote.changeRate != null && indexQuote.changeRate < 0 && row.changeRate < 0;
+      if (hasNews) suggestion.category = '个股消息驱动';
+      else if (hasFlow || row.tigerNet) suggestion.category = '资金行为';
+      else if (hasBoard) suggestion.category = '板块联动带动';
+      else if (hasIndex) suggestion.category = '大盘拖累';
+      else suggestion.category = '独立异动';
+      suggestion.evidence = evidence;
+      const signal = signalFor(entry ? entry.stage : null, suggestion.category, row);
+      row.category = suggestion.category;
+      row.evidence = evidence;
+      row.signal = signal;
+      row.conclusion = conclusionOf(row, suggestion.category);
+      return row;
+    });
+    const stage = entry ? entry.stage : null;
+    rows.forEach(row => {
+      if (row.category) return;
+      row.category = '独立异动';
+      row.evidence = row.evidence || [];
+      row.signal = signalFor(stage, row.category, row);
+      row.conclusion = conclusionOf(row, row.category);
+    });
+    return rows;
+  }
+
+  function signalFor(stage, category, row) {
+    const attack = stage === '发酵' || stage === '高潮' || stage === '修复';
+    const retreat = stage === '退潮' || stage === '冰点';
+    if (category === '个股消息驱动') {
+      if (attack) return { label: '跟', reason: stage + '期消息驱动异动容易获得接力资金，可跟随但控制仓位' };
+      return { label: '观望', reason: stage + '期消息驱动缺乏承接，先等一日确认再决定' };
+    }
+    if (category === '资金行为') {
+      if (attack) return { label: '跟', reason: '主力资金明显流入且情绪处于' + stage + '期，资金行为可跟随' };
+      return { label: '观望', reason: stage + '期资金行为持续性偏弱，等待次日验证' };
+    }
+    if (category === '板块联动带动') {
+      if (attack) return { label: '跟', reason: stage + '期的板块联动异动可跟随，重点看板块整体延续性' };
+      if (retreat) return { label: '回避', reason: '退潮期的板块联动多为反弹，容易一日游' };
+      return { label: '观望', reason: '分歧期板块联动需要次日同步确认' };
+    }
+    if (category === '大盘拖累') return { label: '回避', reason: '异动由大盘拖累造成，个股缺少独立驱动' };
+    if (retreat) return { label: '回避', reason: '退潮期的独立拉升需警惕，缺乏板块与资金支撑' };
+    return { label: '观望', reason: '独立异动缺少可验证驱动，等待消息或板块确认' };
+  }
+  function conclusionOf(row, category) {
+    const dirText = row.changeRate > 0 ? '拉升' : '下跌';
+    if (category === '个股消息驱动') return row.name + ' 异动属于个股消息驱动：' + dirText + ' ' + pct(row.changeRate) + '，先看消息能否兑现。';
+    if (category === '资金行为') return row.name + ' 异动以资金行为为主：' + dirText + ' ' + pct(row.changeRate) + '，主力净额 ' + (row.mainNet == null ? '--' : fmtSignedYi(row.mainNet * 10000)) + '。';
+    if (category === '板块联动带动') return row.name + ' 由 ' + (row.boardName || '所属板块') + ' 联动带动：' + dirText + ' ' + pct(row.changeRate) + '，板块 ' + pct(row.boardRate) + '。';
+    if (category === '大盘拖累') return row.name + ' 异动主要来自大盘拖累，指数走弱带动个股' + dirText + ' ' + pct(row.changeRate) + '。';
+    return row.name + ' 目前是独立异动，' + dirText + ' ' + pct(row.changeRate) + '，暂无消息、板块与资金支撑证据。';
+  }
+
+  function renderAnomalies() {
+    const box = el('ano-list');
+    if (!box) return;
+    const rows = state.anomalies || [];
+    if (!rows.length) {
+      box.innerHTML = '';
+      el('ano-verdict').textContent = '当前监控范围内暂未触发异动阈值，行情已按最新阈值计算。';
+      hide(el('ano-detail'));
+      return;
+    }
+    const previous = state.seenAnomaly || {};
+    const current = {};
+    rows.forEach(row => { current[row.key] = true; });
+    const ordered = rows.slice().sort((a, b) => {
+      const freshA = previous[a.key] ? 0 : 1, freshB = previous[b.key] ? 0 : 1;
+      if (freshA !== freshB) return freshB - freshA;
+      return Math.abs(b.changeRate || 0) - Math.abs(a.changeRate || 0);
+    });
+    box.innerHTML = ordered.map(row => {
+      const fresh = !previous[row.key];
+      return '<div class="ano-card' + (fresh ? ' is-new' : '') + '" data-ano="' + esc(row.key) + '">'
+        + '<div class="ano-h"><span class="ano-name">' + esc(row.name) + '</span>'
+        + (fresh ? '<span class="tagx on">新异动</span>' : '')
+        + row.tags.map(tag => '<span class="tagx">' + esc(tag.tag) + '</span>').join('')
+        + '<span class="' + cls(row.changeRate) + '"><b>' + pct(row.changeRate) + '</b></span>'
+        + '<span class="muted" style="font-size:11px">量比 ' + (row.volumeRatio == null ? '--' : row.volumeRatio.toFixed(2)) + '</span>'
+        + '<span class="muted" style="font-size:11px">' + esc(row.group || '') + ' · ' + esc(row.detectedAt || '') + '</span>'
+        + (row.signal ? '<span class="ano-sig ' + (row.signal.label === '跟' ? 'sig-follow' : row.signal.label === '回避' ? 'sig-avoid' : 'sig-wait') + '">' + esc(row.signal.label) + '</span>' : '')
+        + '</div>'
+        + '<div class="ano-b">' + (row.category ? '<b>[' + esc(row.category) + ']</b> ' : '') + esc(row.conclusion || '正在归因…') + '</div>'
+        + '</div>';
+    }).join('');
+    state.seenAnomaly = current;
+    const risk = ordered.filter(row => row.signal && row.signal.label === '回避').length;
+    const follow = ordered.filter(row => row.signal && row.signal.label === '跟').length;
+    const stage = (findEntry(state.date.ms) || {}).stage;
+    el('ano-verdict').innerHTML = '监控范围内 ' + rows.length + ' 只触发异动：可跟 ' + follow + ' 只、回避 ' + risk + ' 只。'
+      + '<span class="sub">' + (stage ? ('当前情绪阶段为 ' + stage + '，信号由情绪阶段与归因类别共同判定，仅供参考，请结合自身仓位与风险承受。') : '当前情绪阶段待判定，信号仅供结构参考。') + '</span>';
+  }
+
+  function renderAnomalyDetail(key) {
+    const box = el('ano-detail');
+    if (!box) return;
+    const row = (state.anomalies || []).find(item => item.key === key);
+    if (!row) { hide(box); return; }
+    if (box.dataset.key === key) { hide(box); box.dataset.key = ''; return; }
+    box.dataset.key = key;
+    const lines = row.evidence || [];
+    box.innerHTML = '<div class="details"><div class="row"><b>' + esc(row.name) + ' ' + esc(row.code) + '</b>'
+      + '<span class="' + cls(row.changeRate) + '">' + pct(row.changeRate) + '</span>'
+      + '<span class="muted">量比 ' + (row.volumeRatio == null ? '--' : row.volumeRatio.toFixed(2)) + ' · 换手率 ' + (row.turnoverRate == null ? '--' : row.turnoverRate.toFixed(2) + '%') + ' · 封单额 ' + fmtYi(row.sealAmount) + '</span></div>'
+      + '<div class="map-b">归因依据：'
+      + (lines.length ? '<ul style="margin:4px 0 0 16px;padding:0">' + lines.map(line => '<li>' + esc(line) + '</li>').join('') + '</ul>' : '暂无可用归因依据')
+      + '</div>'
+      + (row.signal ? '<div class="map-b">信号：<b>' + esc(row.signal.label) + '</b> · ' + esc(row.signal.reason) + '</div>' : '')
+      + (row.links && row.links.length ? '<div class="map-b">相关原文：' + row.links.map(link => '<a href="' + esc(link.url) + '" target="_blank" rel="noopener">' + esc(link.title) + '</a>').join(' · ') + '</div>' : '')
+      + '</div>';
+  }
+
+  /* ---------------- 交割单复盘 ---------------- */
+
+  function parseTable(text) {
+    const lines = String(text || '').split(/\r?\n/).filter(line => line.trim());
+    if (!lines.length) return [];
+    const delimiter = (lines[0].match(/\t/) ? '\t' : lines[0].match(/;/) ? ';' : ',');
+    return lines.map(line => line.split(delimiter).map(cell => cell.trim().replace(/^"|"$/g, '')));
+  }
+  function convertBlotter(text) {
+    const table = parseTable(text);
+    if (table.length < 2) return [];
+    const header = table[0];
+    const findColumn = keys => header.findIndex(cell => keys.some(key => cell.indexOf(key) >= 0));
+    const dateCol = findColumn(['成交日期', '日期', '交易日期']);
+    const timeCol = findColumn(['成交时间', '时间']);
+    const codeCol = findColumn(['证券代码', '股票代码', '代码']);
+    const nameCol = findColumn(['证券名称', '股票名称', '名称']);
+    const sideCol = findColumn(['买卖方向', '买卖', '方向', '操作']);
+    const priceCol = findColumn(['成交价', '价格', '成交均价']);
+    const qtyCol = findColumn(['成交数量', '数量', '成交量']);
+    const amountCol = findColumn(['成交金额', '金额']);
+    const rows = [];
+    for (let index = 1; index < table.length; index++) {
+      const cells = table[index];
+      if (!cells || cells.length < 4) continue;
+      const rawDate = dateCol >= 0 ? cells[dateCol] : '';
+      const dateText = String(rawDate).replace(/[^0-9]/g, '');
+      if (dateText.length !== 8) continue;
+      const code = String(codeCol >= 0 ? cells[codeCol] : '').replace(/[^0-9]/g, '');
+      if (!code) continue;
+      const sideRaw = String(sideCol >= 0 ? cells[sideCol] : '');
+      const side = /卖|sell|s$/i.test(sideRaw) ? 'sell' : 'buy';
+      const price = Number(String(priceCol >= 0 ? cells[priceCol] : '').replace(/[^0-9.\-]/g, ''));
+      const qty = Number(String(qtyCol >= 0 ? cells[qtyCol] : '').replace(/[^0-9.\-]/g, ''));
+      const amount = amountCol >= 0 ? Number(String(cells[amountCol]).replace(/[^0-9.\-]/g, '')) : NaN;
+      if (!isFinite(price) || !isFinite(qty) || !price || !qty) continue;
+      rows.push({
+        date: dateText.slice(0, 4) + '-' + dateText.slice(4, 6) + '-' + dateText.slice(6, 8),
+        time: timeCol >= 0 ? String(cells[timeCol]) : '',
+        code, name: nameCol >= 0 ? String(cells[nameCol]) : code,
+        side, price, qty, amount: isFinite(amount) ? amount : price * qty
+      });
+    }
+    return rows.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+  }
+  function pairTrades(rows) {
+    const queues = {}, pairs = [];
+    rows.forEach(row => {
+      const bucket = queues[row.code] = queues[row.code] || [];
+      if (row.side === 'buy') bucket.push(row);
+      else {
+        const open = bucket.shift();
+        if (!open) return;
+        const qty = Math.min(open.qty, row.qty);
+        pairs.push({
+          code: row.code, name: row.name || open.name,
+          buyDate: open.date, buyTime: open.time, buyPrice: open.price,
+          sellDate: row.date, sellTime: row.time, sellPrice: row.price,
+          qty, amount: open.price * qty,
+          profit: (row.price - open.price) * qty
+        });
+      }
+    });
+    const open = [];
+    Object.keys(queues).forEach(code => queues[code].forEach(row => open.push(row)));
+    return { pairs, open };
+  }
+
+  async function loadReviewQuotes(pairs) {
+    const codes = [];
+    pairs.forEach(pair => { if (codes.indexOf(pair.code) < 0) codes.push(pair.code); });
+    if (!codes.length) return {};
+    let search = null;
+    try { search = await searchAShare(codes); } catch (error) { warn('交割单标的检索失败', error); return {}; }
+    const records = (search && search.records) || [];
+    const identityOf = {};
+    const nameOf = {};
+    codes.forEach(code => {
+      const matched = records.filter(record => record && String(record.code) === code);
+      if (matched.length === 1 && matched[0].market) {
+        identityOf[code] = { market: String(matched[0].market), code: String(matched[0].code) };
+        nameOf[code] = String(matched[0].name || code);
+      }
+    });
+    const priceMap = {};
+    await mapLimit(codes, 4, async code => {
+      const identity = identityOf[code];
+      if (!identity) return;
+      const dates = pairs.filter(pair => pair.code === code).map(pair => pair.buyDate).sort();
+      const from = new Date(dates[0] + 'T00:00:00').getTime() - 6 * 86400000;
+      const to = new Date(dates[dates.length - 1] + 'T00:00:00').getTime() + 12 * 86400000;
+      try {
+        const payload = await hub(requestDataHubPricesHistorical({ thscode: thscodeOf(identity.market, code), interval: '1d', start: from, end: to }));
+        priceMap[code] = (payload.item || []).map(row => ({ date: dayText(Number(row.date_ms)), close: num(row.close_price), low: num(row.low_price), high: num(row.high_price), open: num(row.open_price) })).filter(row => row.close != null);
+      } catch (error) { warn('读取标的区间日线失败 ' + code, error); }
+      pairs.forEach(pair => { if (pair.code === code) pair.name = nameOf[code] || pair.name; });
+    });
+    let indexSeries = [];
+    try {
+      const dates = pairs.map(pair => pair.buyDate).concat(pairs.map(pair => pair.sellDate)).sort();
+      const payload = await hub(requestDataHubIndexPricesHistorical({
+        thscode: '000001.SH', interval: '1d',
+        start: new Date(dates[0] + 'T00:00:00').getTime() - 6 * 86400000,
+        end: new Date(dates[dates.length - 1] + 'T00:00:00').getTime() + 12 * 86400000
+      }));
+      indexSeries = (payload.item || []).map(row => ({ date: dayText(Number(row.date_ms)), close: num(row.close_price) })).filter(row => row.close != null);
+    } catch (error) { warn('读取指数区间日线失败', error); }
+    return { priceMap, indexSeries };
+  }
+
+  function closeOn(series, date) {
+    if (!series) return null;
+    let best = null;
+    series.forEach(row => { if (row.date <= date && (!best || row.date > best.date)) best = row; });
+    return best;
+  }
+  function stageOnDate(date) {
+    const entry = state.history.find(item => item.day.text === date);
+    return entry ? { score: entry.score, stage: entry.stage } : null;
+  }
+
+  async function runReview() {
+    const rows = state.review && state.review.rows ? state.review.rows : [];
+    if (!rows.length) { hide(el('m-bias')); hide(el('m-attrib')); return; }
+    const { pairs } = pairTrades(rows);
+    if (!pairs.length) {
+      el('rev-verdict').textContent = '当前交割单没有可配对的平仓交易，暂不生成盈亏归因。';
+      hide(el('m-bias')); hide(el('m-attrib')); hide(el('m-env')); return;
+    }
+    const market = await loadReviewQuotes(pairs);
+    const avgAmount = pairs.reduce((sum, pair) => sum + pair.amount, 0) / pairs.length;
+    pairs.forEach(pair => {
+      const stockSeries = market.priceMap ? market.priceMap[pair.code] : null;
+      const buyClose = closeOn(stockSeries, pair.buyDate);
+      const indexBuy = closeOn(market.indexSeries, pair.buyDate);
+      const indexSell = closeOn(market.indexSeries, pair.sellDate);
+      pair.buyClose = buyClose ? buyClose.close : null;
+      pair.indexReturn = (indexBuy && indexSell && indexBuy.close) ? (indexSell.close - indexBuy.close) / indexBuy.close * 100 : null;
+      pair.timing = pair.buyClose == null ? null : (pair.buyClose - pair.buyPrice) * pair.qty;
+      pair.marketPart = pair.indexReturn == null ? null : pair.amount * pair.indexReturn / 100;
+      pair.position = pair.marketPart == null ? null : (pair.amount / avgAmount - 1) * pair.marketPart;
+      pair.selection = pair.timing == null || pair.position == null ? null : pair.profit - pair.timing - pair.position;
+      pair.series = stockSeries;
+      const stage = stageOnDate(pair.buyDate);
+      pair.stage = stage ? stage.stage : null;
+      pair.stageOut = !stage;
+    });
+    state.pairs = pairs;
+    state.reviewMeta = { avgAmount, market };
+    renderAttribution(pairs);
+    renderBiases(pairs);
+    renderEnvStats(pairs);
+    renderReport(pairs);
+    persistReview(pairs);
+  }
+
+  function renderAttribution(pairs) {
+    const total = pairs.reduce((sum, pair) => sum + pair.profit, 0);
+    const timing = pairs.reduce((sum, pair) => sum + (pair.timing == null ? 0 : pair.timing), 0);
+    const position = pairs.reduce((sum, pair) => sum + (pair.position == null ? 0 : pair.position), 0);
+    const selection = total - timing - position;
+    el('pnl-attrib').innerHTML = '<div class="kv-grid" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">'
+      + [['总收益', total, true], ['选股贡献', selection, true], ['择时贡献', timing, true], ['仓位贡献', position, true]]
+        .map(item => '<div class="kv"><span class="kv-k">' + item[0] + '</span><span class="kv-v ' + cls(item[1]) + '">' + fmtSignedYi(item[1]) + '</span></div>').join('')
+      + '</div>'
+      + '<div class="map-b" style="margin-top:8px">归因口径：择时贡献 =（买入日收盘价 − 买入价）× 数量；仓位贡献 =（该笔买入金额 ÷ 平均买入金额 − 1）× 基准收益额，基准收益额 = 买入金额 × 上证指数同期涨跌幅；选股贡献 = 总收益 − 择时贡献 − 仓位贡献。</div>';
+    el('attrib-scope').textContent = '已平仓 ' + pairs.length + ' 笔';
+  }
+
+  function detectBiases(pairs) {
+    const list = [
+      { id: 'chase', name: '追高买入', desc: '买入价高于当日收盘 3% 以上且当日涨幅超过 3%', hits: [] },
+      { id: 'early', name: '过早止盈', desc: '卖出后 5 个交易日内标的继续上涨超过 5%', hits: [] },
+      { id: 'average', name: '亏损后加仓摊平', desc: '同一标的在浮亏状态下再次买入', hits: [] },
+      { id: 'freq', name: '频繁交易', desc: '同一交易日买卖笔数达到 3 笔及以上', hits: [] },
+      { id: 'hold', name: '持有过久不止损', desc: '持有期间最大浮亏超过 10% 且持有超过 5 个交易日', hits: [] },
+      { id: 'revenge', name: '情绪化报复性交易', desc: '亏损卖出后 30 分钟内再次买入', hits: [] }
+    ];
+    const byId = {};
+    list.forEach(item => { byId[item.id] = item; });
+    pairs.forEach(pair => {
+      if (pair.buyClose != null && pair.buyPrice > pair.buyClose * 1.03) byId.chase.hits.push(pair);
+      if (pair.series) {
+        const after = pair.series.filter(row => row.date > pair.sellDate).slice(0, 5);
+        if (after.length >= 2 && after[after.length - 1].close > pair.sellPrice * 1.05) byId.early.hits.push(pair);
+        const during = pair.series.filter(row => row.date >= pair.buyDate && row.date <= pair.sellDate);
+        if (during.length) {
+          const low = Math.min.apply(null, during.map(row => row.low == null ? row.close : row.low));
+          if (low < pair.buyPrice * 0.9 && during.length > 5) byId.hold.hits.push(pair);
+        }
+      }
+      if (pair.stageOut === false) { /* 区间外不参与偏差判定 */ }
+    });
+    const byDate = {};
+    const rows = (state.review && state.review.rows) || [];
+    rows.forEach(row => { byDate[row.date] = (byDate[row.date] || 0) + 1; });
+    pairs.forEach(pair => { if (byDate[pair.buyDate] >= 3) byId.freq.hits.push(pair); });
+    const ordered = rows.slice();
+    for (let index = 1; index < ordered.length; index++) {
+      const prev = ordered[index - 1], cur = ordered[index];
+      if (prev.side === 'sell' && prev.price < (prev.amount / prev.qty) && cur.side === 'buy' && cur.date === prev.date) {
+        const note = { code: cur.code, name: cur.name, buyDate: cur.date, buyTime: cur.time, sellDate: prev.date, sellTime: prev.time, sellPrice: prev.price, buyPrice: cur.price, qty: cur.qty, amount: cur.amount, profit: -Math.abs(cur.amount - prev.amount) };
+        byId.revenge.hits.push(note);
+      }
+    }
+    for (let index = 0; index < rows.length; index++) {
+      const row = rows[index];
+      if (row.side !== 'buy') continue;
+      const earlier = rows.slice(0, index).filter(item => item.code === row.code && item.side === 'buy');
+      if (!earlier.length) continue;
+      const prev = earlier[earlier.length - 1];
+      if (row.price < prev.price) {
+        byId.average.hits.push({ code: row.code, name: row.name, buyDate: row.date, buyTime: row.time, buyPrice: row.price, qty: row.qty, amount: row.amount, profit: (row.price - prev.price) * row.qty });
+      }
+    }
+    return list.map(item => {
+      const loss = item.hits.reduce((sum, hit) => sum + (hit.profit < 0 ? hit.profit : 0), 0);
+      return { id: item.id, name: item.name, desc: item.desc, count: item.hits.length, loss, hits: item.hits };
+    }).sort((a, b) => a.loss - b.loss);
+  }
+
+  function renderBiases(pairs) {
+    const biases = detectBiases(pairs);
+    state.biases = biases;
+    const list = el('bias-list');
+    if (!biases.length) { hide(el('m-bias')); return; }
+    show(el('m-bias'));
+    list.innerHTML = biases.map(item => '<div class="bias-row" data-bias="' + esc(item.id) + '">'
+      + '<span class="bn">' + esc(item.name) + '</span>'
+      + '<span class="tagx">' + item.count + ' 次</span>'
+      + '<span class="' + cls(item.loss) + '">损失 ' + fmtSignedYi(item.loss) + '</span>'
+      + '<span class="bd">' + esc(item.desc) + '</span></div>').join('');
+    renderBiasDetail(null, biases);
+  }
+
+  function renderBiasDetail(id, biases) {
+    const box = el('bias-detail');
+    if (!box) return;
+    if (!id) { box.innerHTML = '<div class="muted" style="margin-top:8px">点击上方任意偏差类别，查看全部对应交易明细。</div>'; return; }
+    const item = biases.find(entry => entry.id === id);
+    if (!item || !item.hits.length) { box.innerHTML = '<div class="muted" style="margin-top:8px">该类偏差暂无命中交易。</div>'; return; }
+    box.innerHTML = '<div class="details"><div><b>' + esc(item.name) + '</b><span class="muted" style="margin-left:8px">' + esc(item.desc) + '</span></div>'
+      + '<div class="scroll-y" style="margin-top:6px"><table class="tbl"><thead><tr><th>日期</th><th>代码</th><th>名称</th><th>动作</th><th class="num">价格</th><th class="num">金额</th><th class="num">影响</th></tr></thead><tbody>'
+      + item.hits.map(hit => '<tr><td>' + esc(hit.buyDate || hit.date || '') + '</td><td>' + esc(hit.code) + '</td><td>' + esc(hit.name || hit.code) + '</td>'
+        + '<td>' + (hit.sellPrice != null && hit.timing != null ? '买入后卖出' : (hit.buyPrice != null ? '买入' : '卖出')) + '</td>'
+        + '<td class="num">' + fmtPrice(hit.buyPrice != null ? hit.buyPrice : hit.sellPrice) + '</td>'
+        + '<td class="num">' + fmtYi(hit.amount) + '</td>'
+        + '<td class="num ' + cls(hit.profit) + '">' + fmtSignedYi(hit.profit) + '</td></tr>').join('')
+      + '</tbody></table></div></div>';
+  }
+
+  function renderEnvStats(pairs) {
+    const inside = pairs.filter(pair => !pair.stageOut && pair.stage);
+    const outside = pairs.length - inside.length;
+    const box = el('env-stats');
+    if (!inside.length) {
+      hide(el('m-env'));
+      return;
+    }
+    show(el('m-env'));
+    const groups = {};
+    inside.forEach(pair => {
+      const bucket = groups[pair.stage] = groups[pair.stage] || { wins: 0, count: 0, profit: 0, sumWin: 0, sumLoss: 0, lossSum: 0 };
+      bucket.count++;
+      bucket.profit += pair.profit;
+      if (pair.profit > 0) { bucket.wins++; bucket.sumWin += pair.profit; }
+      else if (pair.profit < 0) { bucket.sumLoss += Math.abs(pair.profit); bucket.lossSum += pair.profit; }
+    });
+    const totalLoss = Object.keys(groups).reduce((sum, key) => sum + Math.abs(groups[key].lossSum), 0);
+    const rows = STAGES.filter(stage => groups[stage]).map(stage => {
+      const bucket = groups[stage];
+      const rate = bucket.count ? bucket.wins / bucket.count * 100 : 0;
+      const ratio = bucket.sumLoss > 0 ? bucket.sumWin / bucket.sumLoss : (bucket.sumWin > 0 ? Infinity : 0);
+      return {
+        stage, count: bucket.count, rate,
+        ratio: ratio === Infinity ? '无亏损' : ratio.toFixed(2),
+        avg: bucket.profit / bucket.count,
+        lossShare: totalLoss > 0 ? Math.abs(bucket.lossSum) / totalLoss * 100 : 0
+      };
+    }).sort((a, b) => b.lossShare - a.lossShare);
+    box.innerHTML = rows.map(row => '<tr><td><span style="color:' + tagColor(row.stage) + '">' + esc(row.stage) + '</span></td>'
+      + '<td class="num">' + row.count + '</td><td class="num">' + row.rate.toFixed(0) + '%</td>'
+      + '<td class="num">' + row.ratio + '</td><td class="num ' + cls(row.avg) + '">' + fmtSignedYi(row.avg) + '</td>'
+      + '<td class="num">' + row.lossShare.toFixed(0) + '%</td></tr>').join('');
+    const worst = rows[0];
+    el('env-conclusion').innerHTML = worst
+      ? ('你在' + esc(worst.stage) + '期交易的胜率仅 ' + worst.rate.toFixed(0) + '%，占总亏损的 ' + worst.lossShare.toFixed(0) + '%。')
+        + '<span class="sub">对照范围覆盖最近 20 个交易日，' + outside + ' 笔更早的交易标注为区间外且不计入统计。</span>'
+      : '暂无可对照的交易。';
+    el('env-scope').textContent = '区间内 ' + inside.length + ' 笔 / 区间外 ' + outside + ' 笔';
+  }
+
+  function renderReport(pairs) {
+    const limits = { day: 1, week: 5, month: 20 };
+    const span = limits[state.period] || 5;
+    const dates = state.history.slice(0, span).map(entry => entry.day.text);
+    const inWindow = pairs.filter(pair => dates.indexOf(pair.sellDate) >= 0 || dates.indexOf(pair.buyDate) >= 0);
+    const profit = inWindow.reduce((sum, pair) => sum + pair.profit, 0);
+    const wins = inWindow.filter(pair => pair.profit > 0).length;
+    const stageCount = {};
+    inWindow.forEach(pair => { if (pair.stage) stageCount[pair.stage] = (stageCount[pair.stage] || 0) + 1; });
+    const stageText = Object.keys(stageCount).map(key => key + ' ' + stageCount[key] + ' 笔').join('、') || '区间内无阶段标注';
+    const label = state.period === 'day' ? '日报' : state.period === 'week' ? '周报' : '月报';
+    el('rev-report').innerHTML = '<div class="verdict">' + label + '：区间内 ' + inWindow.length + ' 笔交易，合计 '
+      + '<span class="' + cls(profit) + '">' + fmtSignedYi(profit) + '</span>，胜率 ' + (inWindow.length ? (wins / inWindow.length * 100).toFixed(0) : '--') + '%。'
+      + '<span class="sub">区间 = ' + (dates.length ? dates[dates.length - 1] + ' 至 ' + dates[0] : '待定') + '；阶段分布：' + esc(stageText) + '。</span></div>';
+    el('advice-list').innerHTML = buildAdvice(inWindow, pairs).map((text, index) => '<div class="bias-row"><span class="bn">建议 ' + (index + 1) + '</span><span>' + esc(text) + '</span></div>').join('');
+  }
+
+  function buildAdvice(inWindow, pairs) {
+    const advice = [];
+    const biases = state.biases || [];
+    const worstBias = biases.filter(item => item.count > 0 && item.loss < 0)[0];
+    if (worstBias) advice.push('优先修正「' + worstBias.name + '」：已在样本中出现 ' + worstBias.count + ' 次，累计影响 ' + fmtSignedYi(worstBias.loss) + '，交易前先核对买点是否偏离当日收盘 3% 以内。');
+    const inside = pairs.filter(pair => pair.stage && !pair.stageOut);
+    if (inside.length) {
+      const groups = {};
+      inside.forEach(pair => {
+        const bucket = groups[pair.stage] = groups[pair.stage] || { count: 0, loss: 0, wins: 0 };
+        bucket.count++;
+        if (pair.profit < 0) bucket.loss += pair.profit; else bucket.wins++;
+      });
+      const worst = Object.keys(groups).sort((a, b) => groups[a].loss - groups[b].loss)[0];
+      if (worst) advice.push('在「' + worst + '」阶段降低仓位与出手频率：该阶段 ' + groups[worst].count + ' 笔交易胜率仅 ' + (groups[worst].wins / groups[worst].count * 100).toFixed(0) + '%，建议只在明确板块联动时参与。');
+    }
+    const amounts = pairs.map(pair => pair.amount);
+    const avg = amounts.length ? amounts.reduce((sum, value) => sum + value, 0) / amounts.length : 0;
+    const big = pairs.filter(pair => pair.amount > avg * 1.5 && pair.profit < 0);
+    if (big.length) advice.push('控制单笔仓位上限：' + big.length + ' 笔超过平均仓位 1.5 倍的重仓交易出现亏损，建议单笔不超过账户平均单笔金额。');
+    if (!advice.length) advice.push('当前样本未发现显著行为偏差，继续保持现有纪律并持续积累交易记录。');
+    while (advice.length < 3) advice.push('保持记录习惯：后续交易日继续导入交割单，环境对照结论会更稳定。');
+    return advice.slice(0, 3);
+  }
+
+  function persistReview(pairs) {
+    const biases = state.biases || [];
+    const worstBias = biases.filter(item => item.count > 0 && item.loss < 0)[0];
+    const inside = pairs.filter(pair => pair.stage && !pair.stageOut);
+    const groups = {};
+    inside.forEach(pair => {
+      const bucket = groups[pair.stage] = groups[pair.stage] || { count: 0, loss: 0, wins: 0 };
+      bucket.count++;
+      if (pair.profit < 0) bucket.loss += pair.profit; else bucket.wins++;
+    });
+    const worstStage = Object.keys(groups).sort((a, b) => groups[a].loss - groups[b].loss)[0] || null;
+    const summary = {
+      updatedAt: new Date().toISOString(),
+      pairCount: pairs.length,
+      worstBias: worstBias ? { name: worstBias.name, count: worstBias.count, loss: worstBias.loss } : null,
+      worstStage: worstStage,
+      worstStageRate: worstStage && groups[worstStage].count ? groups[worstStage].wins / groups[worstStage].count * 100 : null,
+      advice: buildAdvice(inside, pairs)
+    };
+    store.set('scs.review.summary', summary);
+    state.reviewSummary = summary;
+    syncDiscipline();
+    renderReport(pairs);
+  }
+
+  /* ---------------- 顶栏 ---------------- */
+
+  function syncDiscipline() {
+    const summary = state.reviewSummary || store.get('scs.review.summary', null);
+    const box = el('bar-discipline');
+    if (!box) return;
+    if (!summary) {
+      box.textContent = '纪律提醒：尚无可用的复盘诊断结果，导入交割单后自动同步。';
+      return;
+    }
+    const parts = [];
+    if (summary.worstBias) parts.push('最近复盘发现「' + summary.worstBias.name + '」' + summary.worstBias.count + ' 次');
+    if (summary.worstStage) parts.push('在' + summary.worstStage + '期胜率偏低' + (summary.worstStageRate == null ? '' : ('（' + summary.worstStageRate.toFixed(0) + '%）')));
+    const advice = summary.advice && summary.advice[0] ? summary.advice[0] : '';
+    box.textContent = '纪律提醒：' + (parts.length ? parts.join('，') + '。' : '') + (advice || '保持记录习惯。');
+  }
+
+  function renderBar(entry) {
+    const stage = entry ? entry.stage : null;
+    const pill = el('bar-stage');
+    pill.textContent = stage ? (stage + '期') : '情绪待判定';
+    pill.style.background = stage ? tagColor(stage) : 'var(--c-flat)';
+    el('bar-overseas').textContent = state.overseas || '--';
+    el('bar-position').textContent = stage ? (STAGE_POSITION[stage] || '--') : '--';
+    syncDiscipline();
+  }
+
+  /* ---------------- 编排 ---------------- */
+
+  async function loadStaticParts() {
+    loadRules();
+    renderRules();
+    fillThresholds();
+    try { state.ladder = await hub(requestDataHubDatahubLimitUpLadder({})); }
+    catch (error) { warn('读取连板天梯失败', error); state.ladder = null; }
+    try {
+      const payload = await hub(requestDataHubIndexPricesSnapshot({ thscodes: '000001.SH,399001.SZ,399006.SZ' }));
+      const row = (payload.item || []).find(item => String(item.thscode) === '000001.SH');
+      state.indexQuote = row ? { changeRate: num(row.price_change_ratio_pct) } : {};
+      state.indexRows = (payload.item || []).map(item => ({ code: String(item.thscode), name: INDEX_NAMES[String(item.thscode)] || String(item.thscode), changeRate: num(item.price_change_ratio_pct), turnover: num(item.turnover) }));
+    } catch (error) { warn('读取指数快照失败', error); state.indexQuote = {}; state.indexRows = []; }
+    await loadBoardDirectory();
+  }
+
+  async function loadPrevLimitPerf(entry) {
+    const index = state.history.findIndex(item => item.day.ms === entry.day.ms);
+    const prev = state.history[index + 1];
+    if (!prev || !prev.items || !prev.items.length) return;
+    const identities = prev.items.slice(0, 40).filter(item => item.thscode)
+      .map(item => {
+        const parts = String(item.thscode).split('.');
+        return { market: parts[1] === 'SZ' ? 'SZ' : 'SH', code: parts[0] };
+      });
+    if (!identities.length) return;
+    await new Promise(resolve => {
+      const session = client.createQuoteSession(sessionArgs('prev-limit-performance', identities, dataset => {
+        const records = recordsToMap(dataset);
+        const rates = identities.map(identity => {
+          const quote = quoteOf(records, identity);
+          return quote && quote.changeRate != null ? quote.changeRate : null;
+        }).filter(value => value != null);
+        if (rates.length) entry.prevLimitAvg = rates.reduce((sum, value) => sum + value, 0) / rates.length;
+        if (isFinal(dataset)) resolve();
+      }));
+      session.refresh().catch(error => { warn('读取昨日涨停今日表现失败', error); resolve(); });
+    });
+  }
+
+  async function loadCurrentExtras(entry) {
+    if (!entry) return;
+    await loadPrevLimitPerf(entry);
+    renderEmotion();
+  }
+
+  async function ensureEntry(ms) {
+    const cached = findEntry(ms);
+    if (cached) return cached;
+    const day = state.days.find(item => item.ms === ms);
+    if (!day) return null;
+    const fetched = await loadDayEmotion(day).catch(error => { warn('读取当日情绪失败 ' + day.text, error); return null; });
+    if (!fetched) return null;
+    const amountSeries = await loadAmountSeries([day]);
+    computeScore(fetched, amountSeries);
+    const index = state.days.findIndex(item => item.ms === ms);
+    const prevDay = state.days[index + 1];
+    const prevEntry = prevDay ? findEntry(prevDay.ms) : null;
+    const stage = stageOf(fetched, prevEntry);
+    fetched.stage = stage.name;
+    fetched.stageBasis = stage.basis;
+    state.history.push(fetched);
+    return fetched;
+  }
+
+  async function loadAll() {
+    state.generation += 1;
+    const generation = state.generation;
+    if (!state.date.ms && state.days.length) state.date = { ms: state.days[0].ms, text: state.days[0].text };
+    const note = el('ctx-note');
+    if (note) note.textContent = '';
+    const day = state.days[0];
+    if (!day) return;
+    const historyDays = state.days.slice(0, 20);
+    let history = state.historyCache && state.historyCache.key === historyDays.map(item => item.ms).join(',')
+      ? state.historyCache.value : null;
+    if (!history) {
+      history = await loadEmotion(historyDays);
+      if (generation !== state.generation) return;
+      state.history = history;
+      state.historyCache = { key: historyDays.map(item => item.ms).join(','), value: history };
+    } else {
+      state.history = history;
+    }
+    let entry = findEntry(state.date.ms);
+    if (!entry) entry = await ensureEntry(state.date.ms);
+    if (!entry) entry = state.history[0] || null;
+    if (!entry) setLoadState('暂无数据'); else setLoadState('');
+    renderBar(entry);
+    renderEmotion();
+    await loadCurrentExtras(entry);
+    if (generation !== state.generation) return;
+  }
+
+  function activatePane(name) {
+    state.pane = name;
+    Array.prototype.forEach.call(document.querySelectorAll('.tab[data-pane]'), tab => {
+      tab.classList.toggle('on', tab.dataset.pane === name);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('.pane'), pane => {
+      pane.classList.toggle('on', pane.id === 'pane-' + name);
+    });
+    if (name === 'pre') { loadExternal().catch(error => warn('盘前映射加载失败', error)); }
+    if (name === 'intraday') { loadIntraday().catch(error => warn('盘中异动加载失败', error)); }
+    if (name === 'review') { runReview().catch(error => warn('复盘计算失败', error)); }
+  }
+
+  async function loadIntraday() {
+    await loadWatchScope();
+    renderWatchGroups();
+    await loadWatchQuotes();
+    renderWatchGroups();
+    detectAnomalies();
+    renderAnomalies();
+    await attributeAnomalies();
+    renderAnomalies();
+  }
+
+  async function initialize() {
+    let days = [];
+    try { days = await loadCalendar(); }
+    catch (error) { warn('读取交易日历失败', error); }
+    if (!days.length) {
+      el('ano-verdict').textContent = '交易日信息暂不可用，日期切换已停用。';
+      el('ext-verdict').textContent = '外部环境数据暂不可用。';
+      el('emo-verdict').textContent = '情绪数据暂不可用。';
+      el('rev-verdict').textContent = '交割单复盘等待数据。';
+      return;
+    }
+    state.days = days;
+    state.date = { ms: days[0].ms, text: days[0].text };
+    buildDateSelect();
+    await loadStaticParts();
+    await loadAll();
+    const hour = new Date().getHours();
+    const minute = new Date().getMinutes();
+    const clock = hour * 60 + minute;
+    activatePane(clock < 9 * 60 + 15 ? 'pre' : clock < 15 * 60 + 5 ? 'intraday' : 'review');
+    setLoadState('');
+  }
+
+  /* ---------------- 事件 ---------------- */
+
+  document.addEventListener('mousemove', event => {
+    const target = event.target && event.target.closest ? event.target.closest('[data-tip]') : null;
+    const tip = el('tip');
+    if (!tip) return;
+    if (!target) { tip.hidden = true; return; }
+    tip.textContent = target.getAttribute('data-tip');
+    tip.hidden = false;
+    const width = tip.offsetWidth, height = tip.offsetHeight;
+    tip.style.left = Math.min(event.clientX + 12, window.innerWidth - width - 8) + 'px';
+    tip.style.top = Math.max(event.clientY - height - 10, 4) + 'px';
+  }, { passive: true });
+
+  document.addEventListener('click', event => {
+    const paneTab = event.target.closest ? event.target.closest('.tab[data-pane]') : null;
+    if (paneTab) { activatePane(paneTab.dataset.pane); return; }
+    const periodTab = event.target.closest ? event.target.closest('.tab[data-period]') : null;
+    if (periodTab) {
+      state.period = periodTab.dataset.period;
+      Array.prototype.forEach.call(document.querySelectorAll('.tab[data-period]'), tab => tab.classList.toggle('on', tab === periodTab));
+      if (state.pairs) renderReport(state.pairs);
+      return;
+    }
+    const del = event.target.closest ? event.target.closest('[data-rule-del]') : null;
+    if (del) {
+      state.rules.splice(Number(del.dataset.ruleDel), 1);
+      saveRules(); renderRules(); renderMap();
+      return;
+    }
+    const board = event.target.closest ? event.target.closest('.map-card[data-board]') : null;
+    if (board) { drillBoard(board.dataset.board); return; }
+    const ano = event.target.closest ? event.target.closest('.ano-card[data-ano]') : null;
+    if (ano) { renderAnomalyDetail(ano.dataset.ano); return; }
+    const bias = event.target.closest ? event.target.closest('.bias-row[data-bias]') : null;
+    if (bias) { renderBiasDetail(bias.dataset.bias, state.biases || []); return; }
+  });
+
+  el('prev-day').addEventListener('click', () => moveDate(1));
+  el('next-day').addEventListener('click', () => moveDate(-1));
+  el('reload').addEventListener('click', () => loadAll().catch(error => warn('刷新失败', error)));
+  el('date-sel').addEventListener('change', event => selectDay(Number(event.target.value)));
+  el('rule-add').addEventListener('click', addRule);
+  el('rule-reset').addEventListener('click', () => { state.rules = DEFAULT_RULES.slice(); saveRules(); renderRules(); renderMap(); });
+  el('thr-save').addEventListener('click', () => {
+    store.set('scs.anomaly.thresholds', {
+      rise: Number(el('thr-rise').value) || 5, fall: Number(el('thr-fall').value) || 5,
+      volume: Number(el('thr-vol').value) || 2, deviate: Number(el('thr-dev').value) || 3
+    });
+    detectAnomalies(); renderAnomalies();
+  });
+  el('watch-add').addEventListener('click', async () => {
+    const keyword = el('watch-code').value.trim();
+    if (!keyword) return;
+    try {
+      const search = await searchAShare([keyword]);
+      const record = ((search && search.records) || []).find(item => item && item.market && item.code);
+      if (!record) { warn('未匹配到证券 ' + keyword); return; }
+      const extra = store.get('scs.watch.extra', []);
+      extra.push({ market: String(record.market), code: String(record.code), name: String(record.name || keyword), group: el('watch-group').value.trim() || '本地补充' });
+      store.set('scs.watch.extra', extra);
+      el('watch-code').value = '';
+      await loadIntraday();
+    } catch (error) { warn('加入监控范围失败', error); }
+  });
+  el('watch-groups').addEventListener('click', event => {
+    const tag = event.target.closest ? event.target.closest('[data-remove]') : null;
+    if (!tag) return;
+    const extra = store.get('scs.watch.extra', []).filter(item => item.market + item.code !== tag.dataset.remove);
+    store.set('scs.watch.extra', extra);
+    loadIntraday().catch(error => warn('移除监控范围失败', error));
+  });
+  el('blotter-file').addEventListener('change', event => {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const rows = convertBlotter(String(reader.result || ''));
+      if (!rows.length) { warn('交割单解析失败'); return; }
+      state.review = { rows, source: file.name };
+      store.set('scs.blotter.rows', rows);
+      store.set('scs.blotter.source', file.name);
+      renderBlotter();
+      runReview().catch(error => warn('复盘计算失败', error));
+    };
+    reader.readAsText(file);
+  });
+  el('blotter-sample').addEventListener('click', () => {
+    const rows = convertBlotter(SAMPLE_BLOTTER);
+    state.review = { rows, source: '内置示例交割单' };
+    renderBlotter();
+    runReview().catch(error => warn('复盘计算失败', error));
+  });
+  el('blotter-clear').addEventListener('click', () => {
+    store.set('scs.blotter.rows', []);
+    state.review = { rows: convertBlotter(SAMPLE_BLOTTER), source: '内置示例交割单' };
+    renderBlotter();
+    runReview().catch(error => warn('复盘计算失败', error));
+  });
+
+  function renderBlotter() {
+    const rows = (state.review && state.review.rows) || [];
+    const body = el('blotter-body');
+    if (!body) return;
+    body.innerHTML = rows.slice(0, 200).map(row => '<tr><td>' + esc(row.date) + '</td><td>' + esc(row.time) + '</td>'
+      + '<td>' + esc(row.code) + '</td><td>' + esc(row.name) + '</td>'
+      + '<td class="' + (row.side === 'buy' ? 'up' : 'down') + '">' + (row.side === 'buy' ? '买入' : '卖出') + '</td>'
+      + '<td class="num">' + fmtPrice(row.price) + '</td><td class="num">' + row.qty + '</td>'
+      + '<td class="num">' + fmtYi(row.amount) + '</td></tr>').join('');
+    el('blotter-count').textContent = rows.length ? ('共 ' + rows.length + ' 笔成交记录') : '';
+    el('blotter-source').textContent = state.review ? (state.review.source || '交割单') : '';
+    el('rev-scope').textContent = state.review ? (state.review.source || '交割单') : '';
+  }
+
+  // 初始化：先挂载基础界面，再按页签拉取数据
+  try {
+    watchTheme();
+    loadRules(); renderRules(); fillThresholds(); syncDiscipline();
+    const savedRows = store.get('scs.blotter.rows', null);
+    if (Array.isArray(savedRows) && savedRows.length) {
+      state.review = { rows: savedRows, source: store.get('scs.blotter.source', '上次导入的交割单') };
+      renderBlotter();
+    } else {
+      state.review = { rows: convertBlotter(SAMPLE_BLOTTER), source: '内置示例交割单' };
+      renderBlotter();
+    }
+    initialize().catch(error => { warn('初始化失败', error); setLoadState('加载失败，请重试'); });
+  } catch (error) {
+    warn('页面初始化失败', error);
+    setLoadState('加载失败，请重试');
+  }
+})();
+</script>
+</body>
+</html>

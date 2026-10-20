@@ -1,0 +1,12 @@
+{
+  "kind": "user-clarification-receipt",
+  "issueId": "review-history-window",
+  "question": "模块四「环境对照分析」要把每笔交易标注当日情绪阶段，需要按交易日回看当天的涨停/跌停/炸板数据。交割单日期跨度大时请求量会明显上升，你希望覆盖到哪个范围？",
+  "channel": "conversation",
+  "note": "通过对话提问卡片提交，用户在同一轮回答中同时给出两个问题的选择，答复以用户消息形式返回。",
+  "reply": {
+    "ref": "user-message:question-answers-2026-09-21",
+    "text": "近 20 个交易日，更早标注区间外（推荐）",
+    "selectedOptions": ["recent-20"]
+  }
+}
