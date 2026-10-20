@@ -8,3 +8,5 @@ Thumbs.db
 desktop.ini
 .DS_Store
 *.tmp
+# 本地预览产物（含模拟数据，不可发布）
+dev/preview.html

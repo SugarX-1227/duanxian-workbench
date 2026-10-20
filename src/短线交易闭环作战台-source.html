@@ -60,7 +60,7 @@
   .pill{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:10px;
     font-size:var(--widget-font-size-xs, 11px);font-weight:700;color:#fff;background:var(--c-flat);}
   .tabs{display:flex;gap:4px;padding:6px var(--pad) 0;background:var(--c-card);border-bottom:1px solid var(--c-line);}
-  .tab{height:var(--widget-button-height-m, 28px);padding:0 14px;border:1px solid transparent;border-bottom:none;
+  .tab{height:var(--widget-button-height-m, 28px);padding:0 14px;white-space:nowrap;border:1px solid transparent;border-bottom:none;
     background:transparent;color:var(--c-text2);cursor:pointer;font-size:var(--widget-font-size-sm, 12px);
     border-radius:var(--r-s) var(--r-s) 0 0;}
   .tab:hover{color:var(--c-text);background:var(--c-soft);}
@@ -165,7 +165,6 @@
   .card-s{color:var(--c-text3);}
   .verdict{color:var(--c-text);background:var(--c-soft);border-left-color:var(--c-accent);}
   .verdict .sub{color:var(--c-text2);}
-  .kv-grid{background:var(--c-line);}
   .kv{background:var(--c-card);}
   .kv-k{color:var(--c-text3);}
   .kv-v{color:var(--c-text);}
@@ -210,12 +209,53 @@
   .gauge-num{fill:var(--c-text);}
   .gauge-cap{fill:var(--c-text3);}
 
+  /* 指标格改为描边分隔，避免末行留白处露出底色 */
+  .kv-grid{gap:0;background:transparent;border:1px solid var(--c-line);border-radius:var(--r-s);overflow:hidden;}
+  .kv{box-shadow:1px 0 0 var(--c-line),0 1px 0 var(--c-line);}
+
+  /* 闭环进度 */
+  .loop{margin-left:auto;display:flex;align-items:center;gap:4px;padding-bottom:5px;flex-wrap:wrap;}
+  .step{display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:11px;cursor:pointer;
+    border:1px solid var(--c-line);background:var(--c-soft);color:var(--c-text3);font-size:var(--widget-font-size-xs, 11px);}
+  .step b{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:7px;
+    background:var(--c-line);color:var(--c-card);font-size:10px;}
+  .step.done{color:var(--c-accent);border-color:var(--c-accent);}
+  .step.done b{background:var(--c-accent);}
+  .step-sep{color:var(--c-text3);font-size:10px;}
+
+  /* 交易计划 */
+  .plan-date{display:inline-flex;align-items:center;gap:6px;}
+  .plan-form{margin-top:8px;padding:8px;border:1px dashed var(--c-line);border-radius:var(--r-s);background:var(--c-soft);}
+  .st{display:inline-block;padding:1px 6px;border-radius:9px;font-size:var(--widget-font-size-xs, 11px);border:1px solid var(--c-line);
+    color:var(--c-text2);background:var(--c-soft);white-space:nowrap;}
+  .st-in{color:var(--c-up);border-color:var(--c-up);}
+  .st-stop{color:var(--c-down);border-color:var(--c-down);font-weight:700;}
+  .st-warn{color:#b3730a;border-color:#b3730a;}
+  html.theme-dark .st-warn{color:#f0b54a;border-color:#f0b54a;}
+  .st-ok{color:var(--c-accent);border-color:var(--c-accent);}
+
+  /* 次日清单与日志 */
+  .next-item{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 8px;border:1px solid var(--c-line);
+    border-radius:var(--r-s);background:var(--c-soft);color:var(--c-text);}
+  .next-item input{margin:0;}
+  .next-item .nn{font-weight:700;min-width:72px;}
+  .next-item .nr{color:var(--c-text2);font-size:var(--widget-font-size-sm, 12px);flex:1;min-width:200px;}
+  .next-group{margin-top:6px;font-size:var(--widget-font-size-xs, 11px);color:var(--c-text3);font-weight:700;letter-spacing:.4px;}
+  .log-pre{margin:8px 0 0;padding:10px;max-height:360px;overflow:auto;white-space:pre-wrap;word-break:break-all;
+    border:1px solid var(--c-line);border-radius:var(--r-s);background:var(--c-soft);color:var(--c-text);
+    font-family:var(--widget-font-mono, Consolas, "SFMono-Regular", monospace);font-size:var(--widget-font-size-xs, 11px);line-height:1.6;}
+  .spark{display:inline-block;vertical-align:middle;}
+  .bar-cell{display:inline-block;height:8px;border-radius:2px;vertical-align:middle;}
+
   [hidden]{display:none !important;}
   @media (max-width: 900px){
     .span8,.span6,.span4{grid-column:span 12;}
     .bar{position:static;}
     .disc{max-width:100%;}
     .scroll-y{max-height:none;}
+    .tabs{flex-wrap:wrap;}
+    .tab{white-space:nowrap;padding:0 10px;}
+    .loop{margin-left:0;width:100%;padding:4px 0 6px;}
   }
 </style>
 </head>
@@ -227,6 +267,7 @@
     <span class="pill" id="bar-stage">情绪待判定</span>
     <span class="bar-item">外盘 <b id="bar-overseas">--</b></span>
     <span class="bar-item">建议仓位 <b id="bar-position">--</b></span>
+    <span class="bar-item" id="bar-theme-wrap" hidden>主线 <b id="bar-theme">--</b></span>
     <span class="disc" id="bar-discipline">--</span>
     <span class="muted" id="load-state" hidden></span>
     <div class="bar-r">
@@ -238,15 +279,47 @@
   </div>
 
   <nav class="tabs" id="pane-tabs">
-    <button class="tab" type="button" data-pane="pre">盘前映射</button>
+    <button class="tab" type="button" data-pane="pre">盘前计划</button>
     <button class="tab" type="button" data-pane="emotion">情绪温度</button>
     <button class="tab" type="button" data-pane="intraday">盘中异动</button>
     <button class="tab" type="button" data-pane="review">盘后复盘</button>
+    <div class="loop" id="loop-steps" aria-label="今日闭环进度"></div>
   </nav>
 
   <main class="panes">
     <section class="pane on" id="pane-pre">
       <div class="grid">
+        <section class="card span12" id="m-plan">
+          <div class="card-h"><span class="card-t">交易计划</span>
+            <label class="card-s plan-date">计划日期 <input class="inp" id="plan-date" type="date"></label></div>
+          <div class="card-b">
+            <div class="verdict" id="plan-verdict">写下今天准备做什么、在什么价位做、错了在哪里认错；盘中自动盯计划，收盘自动对照执行。</div>
+            <div class="row" id="plan-context"></div>
+            <div class="row plan-form" id="plan-form">
+              <input class="inp" id="plan-stock" placeholder="代码或名称，如 600362" style="width:150px">
+              <select class="sel" id="plan-type" aria-label="计划类型">
+                <option value="低吸">低吸</option><option value="打板">打板</option><option value="半路">半路</option>
+                <option value="持仓处理">持仓处理</option><option value="观察">只观察</option>
+              </select>
+              <input class="inp" id="plan-low" type="number" step="0.01" min="0" placeholder="买入下沿" style="width:84px">
+              <input class="inp" id="plan-high" type="number" step="0.01" min="0" placeholder="买入上沿" style="width:84px">
+              <input class="inp" id="plan-stop" type="number" step="0.01" min="0" placeholder="止损价" style="width:84px">
+              <input class="inp" id="plan-pos" type="number" step="0.5" min="0" max="10" placeholder="仓位(成)" style="width:76px">
+              <input class="inp" id="plan-logic" placeholder="买入逻辑，如 机器人主线首阴低吸" style="flex:1;min-width:180px">
+              <button class="btn primary" id="plan-add" type="button">加入计划</button>
+            </div>
+            <div class="scroll-y" style="margin-top:8px">
+              <table class="tbl">
+                <thead><tr><th>标的</th><th>类型</th><th class="num">买入区间</th><th class="num">止损</th><th class="num">仓位</th><th>逻辑</th><th>来源</th><th></th></tr></thead>
+                <tbody id="plan-list"></tbody>
+              </table>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <span class="kv-k" style="white-space:nowrap">今日纪律</span>
+              <input class="inp" id="plan-rule" placeholder="今天不做什么，如 高潮次日不追后排；单票不超过 3 成" style="flex:1;min-width:220px">
+            </div>
+          </div>
+        </section>
         <section class="card span12" id="m-ext">
           <div class="card-h"><span class="card-t">隔夜外部环境</span><span class="card-s" id="ext-scope"></span></div>
           <div class="card-b">
@@ -314,6 +387,18 @@
           <div class="card-h"><span class="card-t">近20个交易日情绪分走势</span><span class="card-s">圆点为情绪阶段切换，点击可查看当天明细</span></div>
           <div class="card-b"><div id="emo-chart"></div></div>
         </section>
+        <section class="card span12" id="m-theme" hidden>
+          <div class="card-h"><span class="card-t">主线题材追踪</span><span class="card-s" id="theme-scope"></span></div>
+          <div class="card-b">
+            <div class="verdict" id="theme-verdict"></div>
+            <div class="scroll-y">
+              <table class="tbl">
+                <thead><tr><th>题材</th><th class="num">当日涨停</th><th class="num">前一日</th><th class="num">近5日累计</th><th class="num">连续上榜</th><th>近10日热度</th><th>龙头（最高连板）</th><th>状态</th></tr></thead>
+                <tbody id="theme-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
         <section class="card span12" id="m-ladder">
           <div class="card-h"><span class="card-t">连板梯队</span><span class="card-s" id="ladder-scope"></span></div>
           <div class="card-b">
@@ -335,6 +420,15 @@
           <div class="card-h"><span class="card-t">异动归因解释器</span><span class="card-s" id="ano-scope"></span></div>
           <div class="card-b">
             <div class="verdict" id="ano-verdict">正在读取监控范围…</div>
+            <div class="card" id="plan-watch" style="margin-bottom:8px" hidden>
+              <div class="card-h"><span class="card-t">计划盯盘</span><span class="card-s" id="plan-watch-scope"></span></div>
+              <div class="card-b scroll-x">
+                <table class="tbl">
+                  <thead><tr><th>标的</th><th>类型</th><th class="num">现价</th><th class="num">涨跌幅</th><th class="num">买入区间</th><th class="num">距区间</th><th class="num">止损</th><th class="num">距止损</th><th>状态</th></tr></thead>
+                  <tbody id="plan-watch-body"></tbody>
+                </table>
+              </div>
+            </div>
             <div class="card" id="ano-watch" style="margin-bottom:8px">
               <div class="card-h"><span class="card-t">监控范围</span><span class="card-s">来自客户端自选股与自定义板块，可补充本地范围</span></div>
               <div class="card-b">
@@ -399,6 +493,43 @@
             </table></div>
           </div>
         </section>
+        <section class="card span6" id="m-exec">
+          <div class="card-h"><span class="card-t">计划执行对照</span><span class="card-s" id="exec-scope"></span></div>
+          <div class="card-b">
+            <div class="verdict" id="exec-verdict">正在对照交易计划…</div>
+            <div class="kv-grid" id="exec-grid"></div>
+            <div class="scroll-y" style="margin-top:8px;max-height:200px">
+              <table class="tbl">
+                <thead><tr><th>日期</th><th>标的</th><th>计划</th><th class="num">买入价</th><th>执行情况</th><th class="num">盈亏</th></tr></thead>
+                <tbody id="exec-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+        <section class="card span6" id="m-journal">
+          <div class="card-h"><span class="card-t">纪律曲线</span><span class="card-s" id="journal-scope">按交割单逐日统计</span></div>
+          <div class="card-b">
+            <div class="verdict" id="journal-verdict"></div>
+            <div id="journal-chart"></div>
+            <div class="scroll-y" style="margin-top:6px;max-height:180px">
+              <table class="tbl">
+                <thead><tr><th>交易日</th><th>阶段</th><th class="num">成交</th><th class="num">平仓盈亏</th><th class="num">计划内买入</th><th class="num">偏差</th></tr></thead>
+                <tbody id="journal-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+        <section class="card span12" id="m-next">
+          <div class="card-h"><span class="card-t">次日关注清单</span><span class="card-s" id="next-scope"></span></div>
+          <div class="card-b">
+            <div class="verdict" id="next-verdict">收盘后根据情绪阶段、主线题材、连板梯队与盘中信号自动生成。</div>
+            <div class="rows" id="next-list"></div>
+            <div class="row" style="margin-top:8px">
+              <button class="btn primary" id="next-to-plan" type="button">勾选项加入下一交易日计划</button>
+              <span class="muted" id="next-note"></span>
+            </div>
+          </div>
+        </section>
         <section class="card span12" id="m-bias">
           <div class="card-h"><span class="card-t">行为偏差识别</span><span class="card-s">点击某类偏差查看全部对应交易</span></div>
           <div class="card-b">
@@ -416,6 +547,17 @@
             </div>
             <div id="rev-report" style="margin-top:8px"></div>
             <div class="rows" id="advice-list" style="margin-top:8px"></div>
+            <div class="row" style="margin-top:10px">
+              <span class="kv-k" style="white-space:nowrap">今日心得</span>
+              <input class="inp" id="journal-note" placeholder="一句话记录今天最重要的感悟，会写入复盘日志" style="flex:1;min-width:220px">
+            </div>
+            <div class="row" style="margin-top:8px">
+              <button class="btn primary" id="log-copy" type="button">一键复制复盘日志</button>
+              <button class="btn" id="log-download" type="button">下载 Markdown</button>
+              <button class="btn" id="log-toggle" type="button">预览日志</button>
+              <span class="muted" id="log-note"></span>
+            </div>
+            <pre class="log-pre" id="log-preview" hidden></pre>
           </div>
         </section>
       </div>
@@ -500,6 +642,47 @@
     '2026-09-18,13:05:12,601899,紫金矿业,卖出,17.62,5000,88100',
     '2026-09-18,13:25:40,601899,紫金矿业,买入,17.40,5000,87000'
   ].join('\n');
+
+  // 示例交割单模板：日期取最近交易日（d=0 为最新交易日），成交价 = 当日真实收盘价 × f。
+  // 这样示例始终落在近 20 个交易日的情绪对照窗口内，且价格与真实日线一致；取不到日线时退回上面的固定示例。
+  const SAMPLE_TEMPLATE = [
+    { d: 6, t: '09:41:12', code: '600362', name: '江西铜业', side: 'buy', f: 0.995, qty: 2000 },
+    { d: 5, t: '14:02:31', code: '600362', name: '江西铜业', side: 'sell', f: 1.02, qty: 2000 },
+    { d: 5, t: '09:35:02', code: '002230', name: '科大讯飞', side: 'buy', f: 1.045, qty: 1000 },
+    { d: 5, t: '10:12:44', code: '002230', name: '科大讯飞', side: 'buy', f: 1.0, qty: 1000 },
+    { d: 4, t: '13:20:09', code: '002230', name: '科大讯飞', side: 'sell', f: 0.975, qty: 2000 },
+    { d: 4, t: '09:52:18', code: '300308', name: '中际旭创', side: 'buy', f: 1.0, qty: 500 },
+    { d: 3, t: '10:05:55', code: '300308', name: '中际旭创', side: 'sell', f: 1.04, qty: 500 },
+    { d: 3, t: '09:44:03', code: '600519', name: '贵州茅台', side: 'buy', f: 1.01, qty: 100 },
+    { d: 2, t: '14:30:21', code: '600519', name: '贵州茅台', side: 'sell', f: 0.985, qty: 100 },
+    { d: 2, t: '09:38:47', code: '601899', name: '紫金矿业', side: 'buy', f: 1.0, qty: 5000 },
+    { d: 1, t: '13:05:12', code: '601899', name: '紫金矿业', side: 'sell', f: 0.945, qty: 5000 },
+    { d: 1, t: '13:25:40', code: '601899', name: '紫金矿业', side: 'buy', f: 0.955, qty: 5000 },
+    { d: 1, t: '14:10:05', code: '600362', name: '江西铜业', side: 'buy', f: 1.0, qty: 1000 },
+    { d: 0, t: '10:30:16', code: '601899', name: '紫金矿业', side: 'sell', f: 0.99, qty: 5000 },
+    { d: 0, t: '14:20:48', code: '600362', name: '江西铜业', side: 'sell', f: 1.01, qty: 1000 }
+  ];
+  // 与示例交割单配套的示例计划（价格同样按当日收盘价换算），用于体验「计划执行对照」
+  const SAMPLE_PLAN_TEMPLATE = [
+    { d: 6, code: '600362', name: '江西铜业', type: '低吸', low: 0.985, high: 1.0, stop: 0.95, pos: 2, logic: '铜价走强，有色板块回踩低吸' },
+    { d: 4, code: '300308', name: '中际旭创', type: '半路', low: 0.99, high: 1.01, stop: 0.95, pos: 3, logic: '算力主线分歧转一致，半路跟随' },
+    { d: 2, code: '601899', name: '紫金矿业', type: '低吸', low: 0.99, high: 1.005, stop: 0.965, pos: 3, logic: '金价新高，龙头回踩均线低吸' },
+    { d: 3, code: '600519', name: '贵州茅台', type: '观察', low: null, high: null, stop: null, pos: 0, logic: '消费修复观察，不出手' },
+    { d: 5, code: '300308', name: '中际旭创', type: '低吸', low: 0.97, high: 0.99, stop: 0.94, pos: 2, logic: '算力龙头回踩低吸，不追涨' },
+    { d: 1, code: '600362', name: '江西铜业', type: '低吸', low: 0.99, high: 1.01, stop: 0.95, pos: 1, logic: '有色补涨，小仓位试错' }
+  ];
+  const SAMPLE_RULES = { 6: '只做计划内低吸，不追高', 5: '不追高开的消息股', 4: '高位股分歧日只做主线', 3: '消费只观察', 2: '单票不超过 3 成，跌破止损无条件卖出', 1: '止损后当天不再开新仓' };
+
+  const PLAN_TYPES = ['低吸', '打板', '半路', '持仓处理', '观察'];
+  const BIAS_ADVICE = {
+    chase: '买点距离当日收盘不超过 3%，打板只做首封，不追分时冲高',
+    early: '止盈改为分批：先出一半，剩余以 5 日线或前低做跟踪止盈',
+    average: '亏损仓位禁止加仓，加仓只在浮盈且突破时进行',
+    freq: '单日开仓不超过 2 笔，第 3 笔前先写下理由',
+    hold: '买入即设止损（建议 -5% 至 -7%），触发后无条件执行',
+    revenge: '亏损卖出后 30 分钟内不开新仓，先回到计划清单',
+    offplan: '只做盘前计划里的标的，计划外机会先加入观察，次日再决定'
+  };
 
   const el = id => document.getElementById(id);
   const esc = value => String(value == null ? '' : value)
@@ -627,7 +810,13 @@
     seenAnomaly: {},
     review: null,
     period: 'day',
-    pane: 'pre'
+    pane: 'pre',
+    plans: {},
+    samplePlans: {},
+    planDate: '',
+    themes: [],
+    nextList: [],
+    intradayAt: null
   };
 
   function mapLimit(items, limit, worker) {
@@ -937,6 +1126,7 @@
     const falling = keys.filter(item => state.ext[item.key].changeRate < 0).length;
     const direction = rising === falling ? '分化' : rising > falling ? '偏多' : '偏空';
     state.overseas = direction + '（' + rising + ' 涨 / ' + falling + ' 跌）';
+    renderPlanContext();
     el('ext-verdict').innerHTML = '隔夜外部环境' + esc(direction) + '：' + rising + ' 项上涨、' + falling + ' 项下跌。'
       + '<span class="sub">已取得 ' + keys.length + ' 项外部指标真实报价，未取得报价的对象不参与映射结论。</span>';
     renderMap();
@@ -1157,6 +1347,253 @@
     }
   }
 
+  /* ---------------- 交易计划 ---------------- */
+
+  function loadPlans() {
+    const saved = store.get('scs.plan.v1', {});
+    state.plans = saved && typeof saved === 'object' && !Array.isArray(saved) ? saved : {};
+  }
+  function savePlans() {
+    // 只保留最近 120 个计划日，避免本地存储无限增长
+    const keys = Object.keys(state.plans).sort().reverse();
+    keys.slice(120).forEach(key => { delete state.plans[key]; });
+    store.set('scs.plan.v1', state.plans);
+  }
+  function todayText() { return dayText(Date.now()); }
+  function isWeekday(text) { const day = new Date(text + 'T00:00:00').getDay(); return day !== 0 && day !== 6; }
+  function nextTradeText(fromText) {
+    // 优先用交易日历中晚于 fromText 的日期；日历只到最新交易日时按工作日顺延（节假日需手动调整计划日期）
+    const later = state.days.filter(day => day.text > fromText).map(day => day.text).sort();
+    if (later.length) return later[0];
+    const cursor = new Date(fromText + 'T00:00:00');
+    do { cursor.setDate(cursor.getDate() + 1); } while (cursor.getDay() === 0 || cursor.getDay() === 6);
+    return dayText(cursor.getTime());
+  }
+  function planDefaultDate() {
+    const now = new Date();
+    const text = todayText();
+    if (isWeekday(text) && now.getHours() * 60 + now.getMinutes() < 15 * 60) return text;
+    return nextTradeText(text);
+  }
+  function livePlanDate() {
+    const text = todayText();
+    if (state.plans[text]) return text;
+    if (state.days[0] && state.plans[state.days[0].text]) return state.days[0].text;
+    return text;
+  }
+  function planOf(dateText) {
+    const plan = state.plans[dateText];
+    return plan && Array.isArray(plan.items) ? plan : null;
+  }
+  function reviewPlanOf(dateText) {
+    if (state.review && state.review.sample) return state.samplePlans[dateText] || null;
+    return planOf(dateText);
+  }
+  function ensurePlan(dateText) {
+    if (!planOf(dateText)) state.plans[dateText] = { items: [], rule: '', updatedAt: null };
+    return state.plans[dateText];
+  }
+  function positionCap(stage) {
+    const hit = String(STAGE_POSITION[stage] || '').match(/(\d+)-(\d+)成/);
+    return hit ? Number(hit[2]) : null;
+  }
+  function guessMarket(code) {
+    if (/^(6|9)/.test(code)) return 'SH';
+    if (/^(0|2|3)/.test(code)) return 'SZ';
+    if (/^(4|8)/.test(code)) return 'BJ';
+    return '';
+  }
+  function marketOfThscode(thscode) {
+    const parts = String(thscode || '').split('.');
+    return { code: parts[0], market: marketSuffix(parts[1]) || guessMarket(parts[0]) };
+  }
+  function rangeText(item) {
+    if (item.low == null && item.high == null) return '--';
+    if (item.low != null && item.high != null) return fmtPrice(item.low) + '~' + fmtPrice(item.high);
+    return item.low != null ? '≥' + fmtPrice(item.low) : '≤' + fmtPrice(item.high);
+  }
+  function optNum(id) {
+    const raw = el(id).value;
+    if (raw === '' || raw == null) return null;
+    const value = Number(raw);
+    return isFinite(value) && value > 0 ? value : null;
+  }
+
+  function renderPlanContext() {
+    const box = el('plan-context');
+    if (!box) return;
+    const entry = state.history[0] || null;
+    const chips = [];
+    if (entry && entry.stage) chips.push('<span class="tagx on">最新情绪 ' + esc(entry.stage) + '期 · 建议仓位 ' + esc(STAGE_POSITION[entry.stage] || '--') + '</span>');
+    const lead = (state.leadThemes || [])[0];
+    if (lead) chips.push('<span class="tagx">主线 ' + esc(lead.name) + ' · 连续 ' + lead.streak + ' 日</span>');
+    if (state.overseas) chips.push('<span class="tagx">外盘 ' + esc(state.overseas) + '</span>');
+    const summary = state.reviewSummary || store.get('scs.review.summary', null);
+    if (summary && summary.worstBias) chips.push('<span class="tagx">复盘提醒 少犯「' + esc(summary.worstBias.name) + '」</span>');
+    box.innerHTML = chips.join('');
+    box.hidden = !chips.length;
+  }
+
+  function renderPlan() {
+    const date = state.planDate || planDefaultDate();
+    state.planDate = date;
+    const input = el('plan-date');
+    if (input && input.value !== date) input.value = date;
+    const plan = planOf(date);
+    const items = plan ? plan.items : [];
+    el('plan-list').innerHTML = items.length
+      ? items.map((item, index) => '<tr><td><b>' + esc(item.name || item.code) + '</b> <span class="muted">' + esc(item.code || '') + '</span>'
+        + (item.market ? '' : ' <span class="st st-warn">未匹配行情</span>') + '</td>'
+        + '<td>' + esc(item.type) + '</td><td class="num">' + rangeText(item) + '</td>'
+        + '<td class="num">' + (item.stop == null ? '--' : fmtPrice(item.stop)) + '</td>'
+        + '<td class="num">' + (item.pos ? item.pos + ' 成' : '--') + '</td>'
+        + '<td style="white-space:normal">' + esc(item.logic || '') + '</td>'
+        + '<td class="muted">' + esc(item.source || '手动') + '</td>'
+        + '<td><button class="btn" type="button" data-plan-del="' + index + '">删除</button></td></tr>').join('')
+      : '<tr><td colspan="8" class="muted">' + esc(date) + ' 还没有计划。先写下 1~3 只最想做的标的、买入区间和止损价，宁缺毋滥。</td></tr>';
+    const rule = el('plan-rule');
+    if (rule && document.activeElement !== rule) rule.value = plan && plan.rule ? plan.rule : '';
+    const entry = state.history[0] || null;
+    const cap = entry ? positionCap(entry.stage) : null;
+    const total = items.reduce((sum, item) => sum + (Number(item.pos) || 0), 0);
+    const noStop = items.filter(item => item.type !== '观察' && item.stop == null).length;
+    let verdict = esc(date) + ' 计划 ' + items.length + ' 只，计划总仓位 ' + total + ' 成';
+    if (cap != null) verdict += '，当前情绪阶段建议上限 ' + cap + ' 成';
+    verdict += '。';
+    const warns = [];
+    if (cap != null && total > cap) warns.push('计划仓位超过情绪阶段建议上限 ' + (total - cap) + ' 成，建议删减或降低单票仓位');
+    if (noStop) warns.push(noStop + ' 只标的没有设置止损价，先想清楚错了在哪里认错');
+    if (items.length > 5) warns.push('计划标的超过 5 只，注意力会被分散');
+    el('plan-verdict').innerHTML = verdict + '<span class="sub">' + (warns.length ? '⚠ ' + esc(warns.join('；')) + '。' : '盘中会自动盯这些标的的买入区间与止损价，收盘导入交割单后自动对照执行情况。') + '</span>';
+    renderPlanContext();
+    renderLoop();
+  }
+
+  async function addPlanItem() {
+    const keyword = el('plan-stock').value.trim();
+    if (!keyword) { el('plan-stock').focus(); return; }
+    const date = state.planDate || planDefaultDate();
+    let identity = null;
+    try {
+      const search = await searchAShare([keyword]);
+      const records = ((search && search.records) || []).filter(item => item && item.market && item.code);
+      identity = records.find(item => item.code === keyword || item.name === keyword) || (records.length === 1 ? records[0] : null);
+    } catch (error) { warn('计划标的检索失败 ' + keyword, error); }
+    const code = identity ? String(identity.code) : (/^\d{6}$/.test(keyword) ? keyword : '');
+    const item = {
+      id: 'p-' + Date.now(),
+      name: identity ? String(identity.name || keyword) : keyword,
+      code, market: identity ? String(identity.market) : (code ? guessMarket(code) : ''),
+      type: el('plan-type').value,
+      low: optNum('plan-low'), high: optNum('plan-high'), stop: optNum('plan-stop'),
+      pos: Number(el('plan-pos').value) || 0,
+      logic: el('plan-logic').value.trim(),
+      source: '手动'
+    };
+    if (item.low != null && item.high != null && item.low > item.high) { const swap = item.low; item.low = item.high; item.high = swap; }
+    const plan = ensurePlan(date);
+    plan.items.push(item);
+    plan.updatedAt = new Date().toISOString();
+    savePlans();
+    ['plan-stock', 'plan-low', 'plan-high', 'plan-stop', 'plan-pos', 'plan-logic'].forEach(id => { el(id).value = ''; });
+    renderPlan();
+  }
+
+  /* ---------------- 闭环进度 ---------------- */
+
+  function renderLoop() {
+    const box = el('loop-steps');
+    if (!box) return;
+    const planDate = livePlanDate();
+    const plan = planOf(planDate);
+    const latest = state.days[0] ? state.days[0].text : todayText();
+    const nextPlan = planOf(nextTradeText(latest));
+    const steps = [
+      { pane: 'pre', name: '盘前计划', done: !!(plan && plan.items.length), tip: plan && plan.items.length ? planDate + ' 已写 ' + plan.items.length + ' 只' : '还没写今日计划' },
+      { pane: 'intraday', name: '盘中盯盘', done: !!state.intradayAt, tip: state.intradayAt ? '已于 ' + state.intradayAt + ' 扫描异动' : '尚未扫描异动' },
+      { pane: 'review', name: '盘后复盘', done: !!(state.pairs && state.pairs.length), tip: state.pairs && state.pairs.length ? '已复盘 ' + state.pairs.length + ' 笔平仓' : '尚未生成复盘' },
+      { pane: 'review', name: '明日清单', done: !!(nextPlan && nextPlan.items.some(item => item.source === '次日清单')), tip: '把次日关注清单转入下一交易日计划' }
+    ];
+    box.innerHTML = steps.map((step, index) => (index ? '<span class="step-sep">›</span>' : '')
+      + '<span class="step' + (step.done ? ' done' : '') + '" data-goto="' + step.pane + '"' + tipAttr(step.tip) + '><b>' + (step.done ? '✓' : index + 1) + '</b>' + esc(step.name) + '</span>').join('');
+  }
+
+  /* ---------------- 主线题材 ---------------- */
+
+  function splitReasons(text) {
+    const out = [];
+    String(text || '').split(/[+＋、，,;；\/|]/).forEach(part => {
+      const name = part.trim();
+      if (name && name.length <= 12 && out.indexOf(name) < 0 && !/^(其他|其它|未知)$/.test(name)) out.push(name);
+    });
+    return out;
+  }
+
+  function computeThemes(dateMs) {
+    const asc = state.history.slice().reverse();
+    const position = asc.findIndex(entry => entry.day.ms === dateMs);
+    if (position < 0) return [];
+    const counts = asc.map(entry => {
+      const bucket = {};
+      (entry.items || []).forEach(item => splitReasons(item.limit_up_reason).forEach(name => { bucket[name] = (bucket[name] || 0) + 1; }));
+      return bucket;
+    });
+    const today = counts[position], prev = counts[position - 1] || {};
+    const entry = asc[position];
+    return Object.keys(today).filter(name => today[name] >= 2)
+      .sort((a, b) => today[b] - today[a]).slice(0, 10)
+      .map((name, rank) => {
+        let streak = 0;
+        for (let index = position; index >= 0 && (counts[index][name] || 0) >= 2; index--) streak++;
+        const last10 = counts.slice(Math.max(0, position - 9), position + 1).map(bucket => bucket[name] || 0);
+        const sum5 = counts.slice(Math.max(0, position - 4), position + 1).reduce((sum, bucket) => sum + (bucket[name] || 0), 0);
+        const members = (entry.items || []).filter(item => splitReasons(item.limit_up_reason).indexOf(name) >= 0)
+          .sort((a, b) => (Number(b.continue_day_cnt) || 0) - (Number(a.continue_day_cnt) || 0));
+        const leader = members[0] || null;
+        const before = prev[name] || 0;
+        let status;
+        if (streak <= 1 && before < 2) status = '新发酵';
+        else if (today[name] < before * 0.6) status = '退潮';
+        else if (streak >= 3 && rank < 3 && today[name] >= before) status = '主线延续';
+        else if (streak >= 3 && rank < 3) status = '高位分歧';
+        else if (streak >= 3) status = '持续活跃';
+        else status = '轮动';
+        return { name, today: today[name], prev: before, sum5, streak, last10, leader, members, status };
+      });
+  }
+
+  function sparkSvg(values) {
+    const max = Math.max.apply(null, values.concat([1]));
+    const width = 80, height = 18, step = values.length > 1 ? width / (values.length - 1) : width;
+    const points = values.map((value, index) => (index * step).toFixed(1) + ',' + (height - 2 - (height - 4) * value / max).toFixed(1)).join(' ');
+    return '<svg class="spark" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '"><polyline points="' + points
+      + '" fill="none" stroke="var(--c-accent)" stroke-width="1.5"></polyline></svg>';
+  }
+
+  function renderThemes(entry) {
+    const themes = entry ? computeThemes(entry.day.ms) : [];
+    state.themes = themes;
+    if (entry && state.history[0] && entry.day.ms === state.history[0].day.ms) state.leadThemes = themes.filter(theme => theme.status !== '退潮');
+    const wrap = el('bar-theme-wrap');
+    const lead = (state.leadThemes || [])[0];
+    if (wrap) { wrap.hidden = !lead; el('bar-theme').textContent = lead ? lead.name + '（' + lead.streak + '日）' : '--'; }
+    if (!themes.length) { hide(el('m-theme')); return; }
+    show(el('m-theme'));
+    const statusCls = { 主线延续: 'st-in', 新发酵: 'st-ok', 高位分歧: 'st-warn', 退潮: 'st-stop', 持续活跃: '', 轮动: '' };
+    el('theme-body').innerHTML = themes.map(theme => '<tr><td><b>' + esc(theme.name) + '</b></td>'
+      + '<td class="num">' + theme.today + '</td><td class="num">' + theme.prev + '</td><td class="num">' + theme.sum5 + '</td>'
+      + '<td class="num">' + theme.streak + ' 日</td><td' + tipAttr('近10日每日涨停家数：' + theme.last10.join(' / ')) + '>' + sparkSvg(theme.last10) + '</td>'
+      + '<td>' + (theme.leader ? esc(theme.leader.name) + ' <span class="muted">' + (Number(theme.leader.continue_day_cnt) || 1) + '板</span>' : '--') + '</td>'
+      + '<td><span class="st ' + (statusCls[theme.status] || '') + '">' + esc(theme.status) + '</span></td></tr>').join('');
+    const main = themes.filter(theme => theme.status === '主线延续' || theme.status === '高位分歧')[0];
+    const fresh = themes.filter(theme => theme.status === '新发酵').map(theme => theme.name).slice(0, 3);
+    el('theme-verdict').innerHTML = (main
+      ? '主线是「' + esc(main.name) + '」：已连续 ' + main.streak + ' 日涨停 2 家以上，当日 ' + main.today + ' 家，龙头 ' + esc(main.leader ? main.leader.name : '--') + '。'
+      : '当日没有连续 3 日以上的主线，题材以轮动为主，优先做最强分支的确定性。')
+      + '<span class="sub">' + (fresh.length ? '新发酵方向：' + esc(fresh.join('、')) + '。' : '') + '题材来自涨停原因拆分统计，样本为当日涨停池（按连板数排序的前 60 只）。</span>';
+    el('theme-scope').textContent = entry.day.text;
+  }
+
   /* ---------------- 情绪渲染 ---------------- */
 
   function gaugeSvg(score) {
@@ -1218,6 +1655,8 @@
     el('core-scope').textContent = state.date.text || '';
     renderTrend();
     renderLadder(entry);
+    renderThemes(entry);
+    renderPlanContext();
   }
 
   function renderTrend() {
@@ -1266,7 +1705,7 @@
             rows.push({
               level: boardMap[key], name: stock.name, code: stock.thscode,
               theme: themeOf(stock.thscode, entry), status: ladderStatus(Object.assign({ __level: key }, stock), entry),
-              seal: null, count: (first.boards[key] || []).length
+              seal: sealOf(stock.thscode, entry), count: (first.boards[key] || []).length
             });
           });
         });
@@ -1303,6 +1742,10 @@
     el('ladder-scope').textContent = (state.date.text || '') + ' · 共 ' + rows.length + ' 只连板';
   }
 
+  function sealOf(thscode, entry) {
+    const hit = entry && entry.items ? entry.items.find(item => item.thscode === thscode) : null;
+    return hit ? num(Number(hit.seal_money)) : null;
+  }
   function themeOf(thscode, entry) {
     if (!entry || !entry.items) return '未标注';
     const hit = entry.items.find(item => item.thscode === thscode);
@@ -1366,6 +1809,17 @@
       groups[name].push(key);
       items.push({ market: String(stock.market), code: String(stock.code), group: name, name: stock.name || '' });
     });
+    // 今日计划中的标的自动纳入监控，盘中按计划区间与止损价盯盘
+    const plan = planOf(livePlanDate());
+    (plan ? plan.items : []).forEach(stock => {
+      if (!stock || !stock.market || !stock.code) return;
+      const key = stock.market + stock.code;
+      if (index[key]) return;
+      index[key] = true;
+      groups['今日计划'] = groups['今日计划'] || [];
+      groups['今日计划'].push(key);
+      items.push({ market: String(stock.market), code: String(stock.code), group: '今日计划', name: stock.name || '' });
+    });
     state.watch.items = items;
     state.watch.groups = groups;
     return items;
@@ -1406,16 +1860,62 @@
     return state.quotes || {};
   }
 
+  function planStatusOf(item, quote) {
+    if (!quote || quote.latest == null) return { label: '无行情', cls: '', inRange: false, stopHit: false };
+    const price = quote.latest;
+    if (item.stop != null && price <= item.stop) return { label: '触及止损', cls: 'st-stop', inRange: false, stopHit: true };
+    if (item.type === '观察') return { label: '观察中', cls: '', inRange: false, stopHit: false };
+    const above = item.high != null && price > item.high;
+    const below = item.low != null && price < item.low;
+    if (item.low == null && item.high == null) return { label: '无价位条件', cls: '', inRange: false, stopHit: false };
+    if (!above && !below) return { label: '进入计划区间', cls: 'st-in', inRange: true, stopHit: false };
+    return above ? { label: '高于区间，勿追', cls: 'st-warn', inRange: false, stopHit: false } : { label: '低于区间，等企稳', cls: '', inRange: false, stopHit: false };
+  }
+
+  function renderPlanWatch() {
+    const card = el('plan-watch');
+    if (!card) return;
+    const date = livePlanDate();
+    const plan = planOf(date);
+    if (!plan || !plan.items.length) { hide(card); return; }
+    show(card);
+    const quotes = state.quotes || {};
+    const gap = (price, target) => (price == null || target == null) ? '--' : pct((price - target) / target * 100);
+    el('plan-watch-body').innerHTML = plan.items.map(item => {
+      const quote = item.market ? quotes[item.market + item.code] : null;
+      const status = planStatusOf(item, quote);
+      const price = quote ? quote.latest : null;
+      const target = price == null ? null : item.high != null && price > item.high ? item.high : item.low != null && price < item.low ? item.low : null;
+      return '<tr><td><b>' + esc(item.name || item.code) + '</b></td><td>' + esc(item.type) + '</td>'
+        + '<td class="num">' + fmtPrice(price) + '</td><td class="num ' + cls(quote && quote.changeRate) + '">' + (quote ? pct(quote.changeRate) : '--') + '</td>'
+        + '<td class="num">' + rangeText(item) + '</td><td class="num">' + (target == null ? (status.inRange ? '区间内' : '--') : gap(price, target)) + '</td>'
+        + '<td class="num">' + (item.stop == null ? '--' : fmtPrice(item.stop)) + '</td><td class="num">' + gap(price, item.stop) + '</td>'
+        + '<td><span class="st ' + status.cls + '">' + esc(status.label) + '</span></td></tr>';
+    }).join('');
+    const hits = plan.items.filter(item => planStatusOf(item, item.market ? quotes[item.market + item.code] : null).inRange).length;
+    const stops = plan.items.filter(item => planStatusOf(item, item.market ? quotes[item.market + item.code] : null).stopHit).length;
+    el('plan-watch-scope').textContent = date + ' · 计划 ' + plan.items.length + ' 只 · 进入区间 ' + hits + ' · 触及止损 ' + stops;
+  }
+
   function detectAnomalies() {
     const thresholds = thresholdValues();
     const entry = findEntry(state.date.ms);
     const rows = [];
+    const plan = planOf(livePlanDate());
+    const planIndex = {};
+    (plan ? plan.items : []).forEach(item => { if (item.market && item.code) planIndex[item.market + item.code] = item; });
     state.watch.items.forEach(item => {
       const quote = (state.quotes || {})[item.market + item.code];
       if (!quote || quote.changeRate == null || quote.latest == null) return;
       const ratio = limitRatio({ name: item.name, code: item.code });
       const limitPrice = limitPriceOf(quote, ratio);
       const tags = [];
+      const planned = planIndex[item.market + item.code];
+      if (planned) {
+        const status = planStatusOf(planned, quote);
+        if (status.stopHit) tags.push({ tag: '触及止损', kind: 'down' });
+        else if (status.inRange) tags.push({ tag: '进入计划区间', kind: 'up' });
+      }
       if (limitPrice != null && quote.latest >= limitPrice - 0.001) tags.push({ tag: '封板', kind: 'up' });
       else if (limitPrice != null && quote.high != null && quote.high >= limitPrice - 0.001) tags.push({ tag: '炸板', kind: 'warn' });
       if (quote.changeRate >= thresholds.rise) tags.push({ tag: '快速拉升', kind: 'up' });
@@ -1427,7 +1927,7 @@
         name: item.name || item.code, group: item.group,
         changeRate: quote.changeRate, volumeRatio: quote.volumeRatio,
         turnoverRate: quote.turnoverRate, sealAmount: quote.sealAmount,
-        tags, detectedAt: clockText(), stale: false
+        tags, detectedAt: clockText(), stale: false, plan: planned || null
       });
     });
     state.anomalies = rows.sort((a, b) => (b.changeRate || 0) - (a.changeRate || 0));
@@ -1564,6 +2064,10 @@
     const current = {};
     rows.forEach(row => { current[row.key] = true; });
     const ordered = rows.slice().sort((a, b) => {
+      // 触发计划条件（进入区间、触及止损）的标的优先展示
+      const planA = a.plan && a.tags.some(tag => tag.tag === '触及止损' || tag.tag === '进入计划区间') ? 1 : 0;
+      const planB = b.plan && b.tags.some(tag => tag.tag === '触及止损' || tag.tag === '进入计划区间') ? 1 : 0;
+      if (planA !== planB) return planB - planA;
       const freshA = previous[a.key] ? 0 : 1, freshB = previous[b.key] ? 0 : 1;
       if (freshA !== freshB) return freshB - freshA;
       return Math.abs(b.changeRate || 0) - Math.abs(a.changeRate || 0);
@@ -1579,7 +2083,8 @@
         + '<span class="muted" style="font-size:11px">' + esc(row.group || '') + ' · ' + esc(row.detectedAt || '') + '</span>'
         + (row.signal ? '<span class="ano-sig ' + (row.signal.label === '跟' ? 'sig-follow' : row.signal.label === '回避' ? 'sig-avoid' : 'sig-wait') + '">' + esc(row.signal.label) + '</span>' : '')
         + '</div>'
-        + '<div class="ano-b">' + (row.category ? '<b>[' + esc(row.category) + ']</b> ' : '') + esc(row.conclusion || '正在归因…') + '</div>'
+        + '<div class="ano-b">' + (row.plan ? '<b>[计划内·' + esc(row.plan.type) + ']</b> 计划区间 ' + rangeText(row.plan) + '，止损 ' + (row.plan.stop == null ? '--' : fmtPrice(row.plan.stop)) + (row.plan.logic ? '，逻辑：' + esc(row.plan.logic) : '') + '。<br>' : '')
+        + (row.category ? '<b>[' + esc(row.category) + ']</b> ' : '') + esc(row.conclusion || '正在归因…') + '</div>'
         + '</div>';
     }).join('');
     state.seenAnomaly = current;
@@ -1654,26 +2159,40 @@
     }
     return rows.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
   }
+  function minuteOf(time) {
+    const hit = String(time || '').match(/(\d{1,2}):(\d{2})/);
+    return hit ? Number(hit[1]) * 60 + Number(hit[2]) : null;
+  }
+  function sortRows(rows) {
+    return rows.map((row, index) => Object.assign({}, row, { seq: index }))
+      .sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : String(a.time) < String(b.time) ? -1 : String(a.time) > String(b.time) ? 1 : a.seq - b.seq);
+  }
+  // 先进先出配对：一笔卖出可以平掉多笔买入，部分成交按剩余数量继续配对
   function pairTrades(rows) {
     const queues = {}, pairs = [];
     rows.forEach(row => {
       const bucket = queues[row.code] = queues[row.code] || [];
-      if (row.side === 'buy') bucket.push(row);
-      else {
-        const open = bucket.shift();
-        if (!open) return;
-        const qty = Math.min(open.qty, row.qty);
+      if (row.side === 'buy') { bucket.push({ row, left: row.qty }); return; }
+      let remain = row.qty;
+      row.realized = 0;
+      while (remain > 0 && bucket.length) {
+        const open = bucket[0];
+        const qty = Math.min(open.left, remain);
+        const profit = (row.price - open.row.price) * qty;
         pairs.push({
-          code: row.code, name: row.name || open.name,
-          buyDate: open.date, buyTime: open.time, buyPrice: open.price,
-          sellDate: row.date, sellTime: row.time, sellPrice: row.price,
-          qty, amount: open.price * qty,
-          profit: (row.price - open.price) * qty
+          code: row.code, name: row.name || open.row.name,
+          buyDate: open.row.date, buyTime: open.row.time, buyPrice: open.row.price, buySeq: open.row.seq,
+          sellDate: row.date, sellTime: row.time, sellPrice: row.price, sellSeq: row.seq,
+          qty, amount: open.row.price * qty, profit
         });
+        row.realized += profit;
+        open.left -= qty;
+        remain -= qty;
+        if (open.left <= 0) bucket.shift();
       }
     });
     const open = [];
-    Object.keys(queues).forEach(code => queues[code].forEach(row => open.push(row)));
+    Object.keys(queues).forEach(code => queues[code].forEach(item => open.push(Object.assign({}, item.row, { qty: item.left }))));
     return { pairs, open };
   }
 
@@ -1731,13 +2250,23 @@
   }
 
   async function runReview() {
-    const rows = state.review && state.review.rows ? state.review.rows : [];
-    if (!rows.length) { hide(el('m-bias')); hide(el('m-attrib')); return; }
-    const { pairs } = pairTrades(rows);
+    const rows = sortRows(state.review && state.review.rows ? state.review.rows : []);
+    state.reviewRows = rows;
+    if (!rows.length) {
+      el('rev-verdict').textContent = '还没有交割单：上传券商导出的 CSV/TXT，或载入示例交割单体验完整复盘。';
+      hide(el('m-bias')); hide(el('m-attrib')); hide(el('m-env')); hide(el('m-journal'));
+      renderNextList();
+      return;
+    }
+    const { pairs, open } = pairTrades(rows);
     if (!pairs.length) {
       el('rev-verdict').textContent = '当前交割单没有可配对的平仓交易，暂不生成盈亏归因。';
-      hide(el('m-bias')); hide(el('m-attrib')); hide(el('m-env')); return;
+      hide(el('m-bias')); hide(el('m-attrib')); hide(el('m-env')); hide(el('m-journal'));
+      renderNextList();
+      return;
     }
+    show(el('m-attrib'));
+    el('rev-verdict').textContent = '正在读取 ' + pairs.length + ' 笔平仓交易的区间日线…';
     const market = await loadReviewQuotes(pairs);
     const avgAmount = pairs.reduce((sum, pair) => sum + pair.amount, 0) / pairs.length;
     pairs.forEach(pair => {
@@ -1757,12 +2286,22 @@
       pair.stageOut = !stage;
     });
     state.pairs = pairs;
-    state.reviewMeta = { avgAmount, market };
+    state.reviewMeta = { avgAmount, market, open };
     renderAttribution(pairs);
     renderBiases(pairs);
     renderEnvStats(pairs);
+    renderExecution(pairs);
+    renderJournal(pairs);
     renderReport(pairs);
     persistReview(pairs);
+    renderNextList();
+    const total = pairs.reduce((sum, pair) => sum + pair.profit, 0);
+    const wins = pairs.filter(pair => pair.profit > 0).length;
+    const worst = (state.biases || []).filter(item => item.count > 0 && item.loss < 0)[0];
+    el('rev-verdict').innerHTML = '共 ' + rows.length + ' 笔成交、' + pairs.length + ' 笔平仓，合计 <span class="' + cls(total) + '">' + fmtSignedYi(total) + '</span>，胜率 ' + (wins / pairs.length * 100).toFixed(0) + '%。'
+      + '<span class="sub">' + (worst ? '代价最大的行为偏差是「' + esc(worst.name) + '」（' + worst.count + ' 次，影响 ' + fmtSignedYi(worst.loss) + '）。' : '未发现带来亏损的行为偏差。')
+      + (open.length ? '另有 ' + open.length + ' 笔买入尚未平仓，不计入盈亏。' : '') + '</span>';
+    renderLoop();
   }
 
   function renderAttribution(pairs) {
@@ -1778,56 +2317,80 @@
     el('attrib-scope').textContent = '已平仓 ' + pairs.length + ' 笔';
   }
 
+  function planItemOf(dateText, code) {
+    const plan = reviewPlanOf(dateText);
+    return plan ? plan.items.find(item => item.code === code) || null : null;
+  }
+  function planDates() {
+    const source = state.review && state.review.sample ? state.samplePlans : state.plans;
+    return Object.keys(source || {}).filter(key => source[key] && Array.isArray(source[key].items) && source[key].items.length);
+  }
+
+  // 每条命中记录统一为 { date, code, name, action, price, amount, impact }，impact 为负表示代价（亏损或少赚）
   function detectBiases(pairs) {
     const list = [
-      { id: 'chase', name: '追高买入', desc: '买入价高于当日收盘 3% 以上且当日涨幅超过 3%', hits: [] },
-      { id: 'early', name: '过早止盈', desc: '卖出后 5 个交易日内标的继续上涨超过 5%', hits: [] },
-      { id: 'average', name: '亏损后加仓摊平', desc: '同一标的在浮亏状态下再次买入', hits: [] },
-      { id: 'freq', name: '频繁交易', desc: '同一交易日买卖笔数达到 3 笔及以上', hits: [] },
+      { id: 'chase', name: '追高买入', desc: '买入价高于当日收盘 3% 以上（影响 = 相对收盘多付的成本）', hits: [] },
+      { id: 'early', name: '过早止盈', desc: '卖出后 5 个交易日内收盘继续上涨超过 5%（影响 = 少赚的部分）', hits: [] },
+      { id: 'average', name: '亏损后加仓摊平', desc: '同一标的仍有浮亏持仓时，以更低价格再次买入', hits: [] },
+      { id: 'freq', name: '频繁交易', desc: '同一交易日成交笔数达到 3 笔及以上', hits: [] },
       { id: 'hold', name: '持有过久不止损', desc: '持有期间最大浮亏超过 10% 且持有超过 5 个交易日', hits: [] },
       { id: 'revenge', name: '情绪化报复性交易', desc: '亏损卖出后 30 分钟内再次买入', hits: [] }
     ];
+    const dates = planDates();
+    if (dates.length) list.push({ id: 'offplan', name: '计划外交易', desc: '当日写了计划，却买入了计划之外的标的', hits: [] });
     const byId = {};
     list.forEach(item => { byId[item.id] = item; });
+    const hitOf = (pair, action, price, impact) => ({ date: pair.buyDate, code: pair.code, name: pair.name, action, price, amount: pair.amount, impact, pair });
     pairs.forEach(pair => {
-      if (pair.buyClose != null && pair.buyPrice > pair.buyClose * 1.03) byId.chase.hits.push(pair);
+      if (pair.buyClose != null && pair.buyPrice > pair.buyClose * 1.03) byId.chase.hits.push(hitOf(pair, '买入', pair.buyPrice, (pair.buyClose - pair.buyPrice) * pair.qty));
       if (pair.series) {
         const after = pair.series.filter(row => row.date > pair.sellDate).slice(0, 5);
-        if (after.length >= 2 && after[after.length - 1].close > pair.sellPrice * 1.05) byId.early.hits.push(pair);
+        if (after.length >= 2) {
+          const best = Math.max.apply(null, after.map(row => row.close));
+          if (best > pair.sellPrice * 1.05) byId.early.hits.push(Object.assign(hitOf(pair, '卖出', pair.sellPrice, -(best - pair.sellPrice) * pair.qty), { date: pair.sellDate }));
+        }
         const during = pair.series.filter(row => row.date >= pair.buyDate && row.date <= pair.sellDate);
-        if (during.length) {
+        if (during.length > 5) {
           const low = Math.min.apply(null, during.map(row => row.low == null ? row.close : row.low));
-          if (low < pair.buyPrice * 0.9 && during.length > 5) byId.hold.hits.push(pair);
+          if (low < pair.buyPrice * 0.9) byId.hold.hits.push(hitOf(pair, '买入后持有', pair.buyPrice, pair.profit));
         }
       }
-      if (pair.stageOut === false) { /* 区间外不参与偏差判定 */ }
+      if (byId.offplan && dates.indexOf(pair.buyDate) >= 0 && !planItemOf(pair.buyDate, pair.code)) byId.offplan.hits.push(hitOf(pair, '计划外买入', pair.buyPrice, pair.profit));
     });
-    const byDate = {};
-    const rows = (state.review && state.review.rows) || [];
-    rows.forEach(row => { byDate[row.date] = (byDate[row.date] || 0) + 1; });
-    pairs.forEach(pair => { if (byDate[pair.buyDate] >= 3) byId.freq.hits.push(pair); });
-    const ordered = rows.slice();
-    for (let index = 1; index < ordered.length; index++) {
-      const prev = ordered[index - 1], cur = ordered[index];
-      if (prev.side === 'sell' && prev.price < (prev.amount / prev.qty) && cur.side === 'buy' && cur.date === prev.date) {
-        const note = { code: cur.code, name: cur.name, buyDate: cur.date, buyTime: cur.time, sellDate: prev.date, sellTime: prev.time, sellPrice: prev.price, buyPrice: cur.price, qty: cur.qty, amount: cur.amount, profit: -Math.abs(cur.amount - prev.amount) };
-        byId.revenge.hits.push(note);
+    const rows = state.reviewRows || [];
+    const pairOfBuy = seq => pairs.filter(pair => pair.buySeq === seq);
+    const profitOfBuy = seq => pairOfBuy(seq).reduce((sum, pair) => sum + pair.profit, 0);
+    const countByDate = {};
+    rows.forEach(row => { countByDate[row.date] = (countByDate[row.date] || 0) + 1; });
+    pairs.forEach(pair => { if (countByDate[pair.buyDate] >= 3) byId.freq.hits.push(hitOf(pair, '当日第 ' + countByDate[pair.buyDate] + ' 笔内', pair.buyPrice, pair.profit)); });
+    const holding = {};
+    rows.forEach((row, index) => {
+      const bag = holding[row.code] = holding[row.code] || { qty: 0, lastBuy: null };
+      if (row.side === 'buy') {
+        if (bag.qty > 0 && bag.lastBuy != null && row.price < bag.lastBuy) {
+          byId.average.hits.push({ date: row.date, code: row.code, name: row.name, action: '浮亏加仓', price: row.price, amount: row.amount, impact: profitOfBuy(row.seq) });
+        }
+        bag.qty += row.qty;
+        bag.lastBuy = row.price;
+        for (let back = index - 1; back >= 0; back--) {
+          const prev = rows[back];
+          if (prev.date !== row.date) break;
+          if (prev.side !== 'sell') continue;
+          const gap = minuteOf(row.time) != null && minuteOf(prev.time) != null ? minuteOf(row.time) - minuteOf(prev.time) : null;
+          if ((prev.realized || 0) < 0 && gap != null && gap >= 0 && gap <= 30) {
+            byId.revenge.hits.push({ date: row.date, code: row.code, name: row.name, action: '亏损卖出 ' + (prev.name || prev.code) + ' 后 ' + gap + ' 分钟买入', price: row.price, amount: row.amount, impact: profitOfBuy(row.seq) });
+          }
+          break;
+        }
+      } else {
+        bag.qty = Math.max(0, bag.qty - row.qty);
+        if (!bag.qty) bag.lastBuy = null;
       }
-    }
-    for (let index = 0; index < rows.length; index++) {
-      const row = rows[index];
-      if (row.side !== 'buy') continue;
-      const earlier = rows.slice(0, index).filter(item => item.code === row.code && item.side === 'buy');
-      if (!earlier.length) continue;
-      const prev = earlier[earlier.length - 1];
-      if (row.price < prev.price) {
-        byId.average.hits.push({ code: row.code, name: row.name, buyDate: row.date, buyTime: row.time, buyPrice: row.price, qty: row.qty, amount: row.amount, profit: (row.price - prev.price) * row.qty });
-      }
-    }
+    });
     return list.map(item => {
-      const loss = item.hits.reduce((sum, hit) => sum + (hit.profit < 0 ? hit.profit : 0), 0);
+      const loss = item.hits.reduce((sum, hit) => sum + (hit.impact < 0 ? hit.impact : 0), 0);
       return { id: item.id, name: item.name, desc: item.desc, count: item.hits.length, loss, hits: item.hits };
-    }).sort((a, b) => a.loss - b.loss);
+    }).sort((a, b) => a.loss - b.loss || b.count - a.count);
   }
 
   function renderBiases(pairs) {
@@ -1839,7 +2402,7 @@
     list.innerHTML = biases.map(item => '<div class="bias-row" data-bias="' + esc(item.id) + '">'
       + '<span class="bn">' + esc(item.name) + '</span>'
       + '<span class="tagx">' + item.count + ' 次</span>'
-      + '<span class="' + cls(item.loss) + '">损失 ' + fmtSignedYi(item.loss) + '</span>'
+      + '<span class="' + cls(item.loss) + '">影响 ' + fmtSignedYi(item.loss) + '</span>'
       + '<span class="bd">' + esc(item.desc) + '</span></div>').join('');
     renderBiasDetail(null, biases);
   }
@@ -1847,17 +2410,139 @@
   function renderBiasDetail(id, biases) {
     const box = el('bias-detail');
     if (!box) return;
+    Array.prototype.forEach.call(document.querySelectorAll('.bias-row[data-bias]'), row => row.classList.toggle('on', row.dataset.bias === id));
     if (!id) { box.innerHTML = '<div class="muted" style="margin-top:8px">点击上方任意偏差类别，查看全部对应交易明细。</div>'; return; }
     const item = biases.find(entry => entry.id === id);
     if (!item || !item.hits.length) { box.innerHTML = '<div class="muted" style="margin-top:8px">该类偏差暂无命中交易。</div>'; return; }
     box.innerHTML = '<div class="details"><div><b>' + esc(item.name) + '</b><span class="muted" style="margin-left:8px">' + esc(item.desc) + '</span></div>'
+      + (BIAS_ADVICE[item.id] ? '<div class="map-b">改进动作：' + esc(BIAS_ADVICE[item.id]) + '</div>' : '')
       + '<div class="scroll-y" style="margin-top:6px"><table class="tbl"><thead><tr><th>日期</th><th>代码</th><th>名称</th><th>动作</th><th class="num">价格</th><th class="num">金额</th><th class="num">影响</th></tr></thead><tbody>'
-      + item.hits.map(hit => '<tr><td>' + esc(hit.buyDate || hit.date || '') + '</td><td>' + esc(hit.code) + '</td><td>' + esc(hit.name || hit.code) + '</td>'
-        + '<td>' + (hit.sellPrice != null && hit.timing != null ? '买入后卖出' : (hit.buyPrice != null ? '买入' : '卖出')) + '</td>'
-        + '<td class="num">' + fmtPrice(hit.buyPrice != null ? hit.buyPrice : hit.sellPrice) + '</td>'
+      + item.hits.map(hit => '<tr><td>' + esc(hit.date || '') + '</td><td>' + esc(hit.code) + '</td><td>' + esc(hit.name || hit.code) + '</td>'
+        + '<td>' + esc(hit.action || '') + '</td>'
+        + '<td class="num">' + fmtPrice(hit.price) + '</td>'
         + '<td class="num">' + fmtYi(hit.amount) + '</td>'
-        + '<td class="num ' + cls(hit.profit) + '">' + fmtSignedYi(hit.profit) + '</td></tr>').join('')
+        + '<td class="num ' + cls(hit.impact) + '">' + fmtSignedYi(hit.impact) + '</td></tr>').join('')
       + '</tbody></table></div></div>';
+  }
+
+  function executionOf(pair) {
+    const item = planItemOf(pair.buyDate, pair.code);
+    if (!item) return { inPlan: false, item: null, notes: ['计划外'] };
+    const notes = [];
+    if (item.type === '观察') notes.push('计划只观察却出手');
+    if (item.high != null && pair.buyPrice > item.high * 1.005) notes.push('买价高于计划上沿 ' + pct((pair.buyPrice - item.high) / item.high * 100, 1));
+    else if (item.low != null && pair.buyPrice < item.low * 0.995) notes.push('买价低于计划下沿');
+    else if (item.low != null || item.high != null) notes.push('按计划价位买入');
+    if (item.stop != null) {
+      if (pair.sellPrice < item.stop * 0.98) notes.push('卖价低于止损 ' + pct((pair.sellPrice - item.stop) / item.stop * 100, 1) + '，止损不坚决');
+      else if (pair.sellPrice <= item.stop * 1.01) notes.push('按止损离场');
+    }
+    return { inPlan: true, item, notes };
+  }
+
+  function renderExecution(pairs) {
+    const dates = planDates();
+    const scoped = pairs.filter(pair => dates.indexOf(pair.buyDate) >= 0);
+    if (!scoped.length) {
+      el('exec-verdict').innerHTML = dates.length
+        ? '已有 ' + dates.length + ' 个交易日写了计划，但交割单中这些日期没有平仓交易。<span class="sub">计划与交割单按买入日期对照。</span>'
+        : '还没有可对照的交易计划。<span class="sub">在「盘前计划」页签写下当天计划，收盘导入交割单后，这里会给出计划执行率、计划内外胜率对比。也可以先点「载入示例交割单」体验。</span>';
+      el('exec-grid').innerHTML = '';
+      el('exec-body').innerHTML = '';
+      el('exec-scope').textContent = '';
+      state.execution = null;
+      return;
+    }
+    const stat = list => {
+      const wins = list.filter(pair => pair.profit > 0).length;
+      return { count: list.length, profit: list.reduce((sum, pair) => sum + pair.profit, 0), rate: list.length ? wins / list.length * 100 : null };
+    };
+    scoped.forEach(pair => { pair.exec = executionOf(pair); });
+    const inside = stat(scoped.filter(pair => pair.exec.inPlan));
+    const outside = stat(scoped.filter(pair => !pair.exec.inPlan));
+    const adherence = inside.count / scoped.length * 100;
+    const stopMiss = scoped.filter(pair => pair.exec.notes.some(note => note.indexOf('止损不坚决') >= 0)).length;
+    const unexecuted = dates.reduce((sum, date) => {
+      const plan = reviewPlanOf(date);
+      return sum + plan.items.filter(item => item.type !== '观察' && !scoped.some(pair => pair.buyDate === date && pair.code === item.code)).length;
+    }, 0);
+    state.execution = { adherence, inside, outside, stopMiss, unexecuted, dates: dates.length };
+    el('exec-grid').innerHTML = [
+      ['计划执行率', adherence.toFixed(0) + '%', null],
+      ['计划内胜率', inside.rate == null ? '--' : inside.rate.toFixed(0) + '%', null],
+      ['计划外胜率', outside.rate == null ? '--' : outside.rate.toFixed(0) + '%', null],
+      ['计划内盈亏', fmtSignedYi(inside.profit), inside.profit],
+      ['计划外盈亏', fmtSignedYi(outside.profit), outside.profit],
+      ['止损不坚决', stopMiss + ' 笔', null]
+    ].map(cell => '<div class="kv"><span class="kv-k">' + cell[0] + '</span><span class="kv-v ' + (cell[2] == null ? '' : cls(cell[2])) + '">' + esc(cell[1]) + '</span></div>').join('');
+    let verdict;
+    if (outside.count && outside.profit < 0 && (inside.rate == null || outside.rate < inside.rate)) {
+      verdict = '计划外交易是主要亏损来源：' + outside.count + ' 笔计划外交易合计 ' + fmtSignedYi(outside.profit) + '，胜率 ' + outside.rate.toFixed(0) + '%' + (inside.rate == null ? '' : '，低于计划内的 ' + inside.rate.toFixed(0) + '%') + '。';
+    } else if (!outside.count) {
+      verdict = '知行合一：写了计划的交易日里，所有买入都在计划之内。';
+    } else {
+      verdict = '计划执行率 ' + adherence.toFixed(0) + '%，计划内 ' + inside.count + ' 笔合计 ' + fmtSignedYi(inside.profit) + '，计划外 ' + outside.count + ' 笔合计 ' + fmtSignedYi(outside.profit) + '。';
+    }
+    el('exec-verdict').innerHTML = esc(verdict) + '<span class="sub">对照范围：' + dates.length + ' 个写了计划的交易日；另有 ' + unexecuted + ' 个计划标的未出手（错过或主动放弃都值得复盘）。'
+      + (state.review && state.review.sample ? '当前为示例计划。' : '') + '</span>';
+    el('exec-body').innerHTML = scoped.slice().sort((a, b) => a.buyDate < b.buyDate ? 1 : -1).map(pair => '<tr><td>' + esc(pair.buyDate) + '</td><td>' + esc(pair.name || pair.code) + '</td>'
+      + '<td>' + (pair.exec.inPlan ? '<span class="st st-ok">' + esc(pair.exec.item.type) + '</span>' : '<span class="st st-stop">计划外</span>') + '</td>'
+      + '<td class="num">' + fmtPrice(pair.buyPrice) + '</td><td style="white-space:normal">' + esc(pair.exec.notes.join('；')) + '</td>'
+      + '<td class="num ' + cls(pair.profit) + '">' + fmtSignedYi(pair.profit) + '</td></tr>').join('');
+    el('exec-scope').textContent = '计划日 ' + dates.length + ' 个 · 对照 ' + scoped.length + ' 笔';
+  }
+
+  function renderJournal(pairs) {
+    const rows = state.reviewRows || [];
+    const dates = [];
+    rows.forEach(row => { if (dates.indexOf(row.date) < 0) dates.push(row.date); });
+    dates.sort();
+    const recent = dates.slice(-20);
+    if (!recent.length) { hide(el('m-journal')); return; }
+    show(el('m-journal'));
+    const biasByDate = {};
+    (state.biases || []).forEach(bias => bias.hits.forEach(hit => { if (hit.date) biasByDate[hit.date] = (biasByDate[hit.date] || 0) + 1; }));
+    const days = recent.map(date => {
+      const buys = rows.filter(row => row.date === date && row.side === 'buy');
+      const plan = reviewPlanOf(date);
+      const planned = plan ? buys.filter(row => plan.items.some(item => item.code === row.code)).length : null;
+      const stage = stageOnDate(date);
+      return {
+        date, stage: stage ? stage.stage : null, trades: rows.filter(row => row.date === date).length,
+        profit: pairs.filter(pair => pair.sellDate === date).reduce((sum, pair) => sum + pair.profit, 0),
+        planRate: plan && buys.length ? planned / buys.length * 100 : null,
+        biases: biasByDate[date] || 0
+      };
+    });
+    state.journalDays = days;
+    const maxAbs = Math.max.apply(null, days.map(day => Math.abs(day.profit)).concat([1]));
+    const width = 960, height = 110, mid = 55, slot = width / days.length;
+    el('journal-chart').innerHTML = '<svg class="chart" style="height:110px" viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="none">'
+      + '<line x1="0" x2="' + width + '" y1="' + mid + '" y2="' + mid + '" stroke="var(--c-line)"></line>'
+      + days.map((day, index) => {
+        const h = Math.max(1, Math.abs(day.profit) / maxAbs * 46);
+        const x = index * slot + slot * 0.2, w = slot * 0.6;
+        const y = day.profit >= 0 ? mid - h : mid;
+        return '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h.toFixed(1) + '" fill="' + (day.profit >= 0 ? 'var(--c-up)' : 'var(--c-down)') + '"'
+          + tipAttr(day.date + '\n平仓盈亏 ' + fmtSignedYi(day.profit) + '\n偏差 ' + day.biases + ' 次' + (day.planRate == null ? '' : '\n计划内买入 ' + day.planRate.toFixed(0) + '%')) + '></rect>'
+          + (day.biases ? '<circle cx="' + (x + w / 2).toFixed(1) + '" cy="8" r="' + Math.min(7, 2 + day.biases * 1.5) + '" fill="#b3730a"' + tipAttr(day.date + ' 偏差 ' + day.biases + ' 次') + '></circle>' : '');
+      }).join('') + '</svg>';
+    el('journal-body').innerHTML = days.slice().reverse().map(day => '<tr><td>' + esc(day.date) + '</td>'
+      + '<td>' + (day.stage ? '<span style="color:' + tagColor(day.stage) + '">' + esc(day.stage) + '</span>' : '<span class="muted">区间外</span>') + '</td>'
+      + '<td class="num">' + day.trades + '</td><td class="num ' + cls(day.profit) + '">' + fmtSignedYi(day.profit) + '</td>'
+      + '<td class="num">' + (day.planRate == null ? '--' : day.planRate.toFixed(0) + '%') + '</td>'
+      + '<td class="num">' + (day.biases || '') + '</td></tr>').join('');
+    const half = Math.floor(days.length / 2);
+    const avg = list => list.length ? list.reduce((sum, day) => sum + day.biases, 0) / list.length : 0;
+    let verdict = '共 ' + days.length + ' 个交易日有成交。';
+    if (half >= 2) {
+      const before = avg(days.slice(0, half)), after = avg(days.slice(half));
+      verdict = after < before ? '纪律在改善：近 ' + (days.length - half) + ' 个交易日平均每日偏差 ' + after.toFixed(1) + ' 次，之前为 ' + before.toFixed(1) + ' 次。'
+        : after > before ? '纪律在走弱：近 ' + (days.length - half) + ' 个交易日平均每日偏差 ' + after.toFixed(1) + ' 次，高于之前的 ' + before.toFixed(1) + ' 次。'
+          : '纪律持平：前后两段平均每日偏差都是 ' + after.toFixed(1) + ' 次。';
+    }
+    el('journal-verdict').innerHTML = esc(verdict) + '<span class="sub">柱为当日平仓盈亏，顶部橙点为当日命中的行为偏差次数；持续导入交割单，这条曲线就是你的进步记录。</span>';
+    el('journal-scope').textContent = recent[0] + ' 至 ' + recent[recent.length - 1];
   }
 
   function renderEnvStats(pairs) {
@@ -1922,7 +2607,11 @@
     const advice = [];
     const biases = state.biases || [];
     const worstBias = biases.filter(item => item.count > 0 && item.loss < 0)[0];
-    if (worstBias) advice.push('优先修正「' + worstBias.name + '」：已在样本中出现 ' + worstBias.count + ' 次，累计影响 ' + fmtSignedYi(worstBias.loss) + '，交易前先核对买点是否偏离当日收盘 3% 以内。');
+    if (worstBias) advice.push('优先修正「' + worstBias.name + '」：样本中出现 ' + worstBias.count + ' 次，累计影响 ' + fmtSignedYi(worstBias.loss) + '。' + (BIAS_ADVICE[worstBias.id] || ''));
+    const exec = state.execution;
+    if (exec && exec.outside.count && exec.outside.profit < 0 && (!worstBias || worstBias.id !== 'offplan')) {
+      advice.push('计划外交易 ' + exec.outside.count + ' 笔合计 ' + fmtSignedYi(exec.outside.profit) + '：' + BIAS_ADVICE.offplan + '。');
+    }
     const inside = pairs.filter(pair => pair.stage && !pair.stageOut);
     if (inside.length) {
       const groups = {};
@@ -1931,15 +2620,17 @@
         bucket.count++;
         if (pair.profit < 0) bucket.loss += pair.profit; else bucket.wins++;
       });
-      const worst = Object.keys(groups).sort((a, b) => groups[a].loss - groups[b].loss)[0];
-      if (worst) advice.push('在「' + worst + '」阶段降低仓位与出手频率：该阶段 ' + groups[worst].count + ' 笔交易胜率仅 ' + (groups[worst].wins / groups[worst].count * 100).toFixed(0) + '%，建议只在明确板块联动时参与。');
+      const worst = Object.keys(groups).filter(key => groups[key].loss < 0).sort((a, b) => groups[a].loss - groups[b].loss)[0];
+      if (worst) advice.push('在「' + worst + '」阶段降低仓位与出手频率：该阶段 ' + groups[worst].count + ' 笔交易胜率 ' + (groups[worst].wins / groups[worst].count * 100).toFixed(0) + '%，仓位上限按 ' + (STAGE_POSITION[worst] || '--') + ' 执行。');
     }
     const amounts = pairs.map(pair => pair.amount);
     const avg = amounts.length ? amounts.reduce((sum, value) => sum + value, 0) / amounts.length : 0;
     const big = pairs.filter(pair => pair.amount > avg * 1.5 && pair.profit < 0);
     if (big.length) advice.push('控制单笔仓位上限：' + big.length + ' 笔超过平均仓位 1.5 倍的重仓交易出现亏损，建议单笔不超过账户平均单笔金额。');
+    const secondBias = biases.filter(item => item.count > 0 && item.loss < 0 && item !== worstBias)[0];
+    if (secondBias && BIAS_ADVICE[secondBias.id]) advice.push('其次关注「' + secondBias.name + '」（' + secondBias.count + ' 次）：' + BIAS_ADVICE[secondBias.id] + '。');
     if (!advice.length) advice.push('当前样本未发现显著行为偏差，继续保持现有纪律并持续积累交易记录。');
-    while (advice.length < 3) advice.push('保持记录习惯：后续交易日继续导入交割单，环境对照结论会更稳定。');
+    while (advice.length < 3) advice.push('保持记录习惯：每天写计划、收盘导入交割单，纪律曲线与环境对照会越来越准。');
     return advice.slice(0, 3);
   }
 
@@ -1957,7 +2648,8 @@
     const summary = {
       updatedAt: new Date().toISOString(),
       pairCount: pairs.length,
-      worstBias: worstBias ? { name: worstBias.name, count: worstBias.count, loss: worstBias.loss } : null,
+      worstBias: worstBias ? { id: worstBias.id, name: worstBias.name, count: worstBias.count, loss: worstBias.loss } : null,
+      adherence: state.execution ? state.execution.adherence : null,
       worstStage: worstStage,
       worstStageRate: worstStage && groups[worstStage].count ? groups[worstStage].wins / groups[worstStage].count * 100 : null,
       advice: buildAdvice(inside, pairs)
@@ -1966,6 +2658,243 @@
     state.reviewSummary = summary;
     syncDiscipline();
     renderReport(pairs);
+  }
+
+  /* ---------------- 次日关注清单 ---------------- */
+
+  function nextPositionHint(entry) {
+    if (!entry || !entry.stage) return null;
+    const index = state.history.findIndex(item => item.day.ms === entry.day.ms);
+    const prev = state.history[index + 1];
+    const delta = prev && prev.score != null && entry.score != null ? entry.score - prev.score : null;
+    let text = '明日仓位上限参考 ' + (STAGE_POSITION[entry.stage] || '--');
+    if (entry.stage === '高潮') text += '；高潮次日容易分歧，只做核心不追后排';
+    else if (entry.stage === '退潮' || entry.stage === '冰点') text += '；以观察为主，等情绪修复信号（涨停回升、炸板率回落）';
+    else if (delta != null && delta < -8) text += '；情绪分单日回落 ' + Math.abs(delta).toFixed(1) + ' 分，防分歧';
+    else if (delta != null && delta > 8) text += '；情绪分单日回升 ' + delta.toFixed(1) + ' 分，关注主线延续';
+    return text;
+  }
+
+  function buildNextList() {
+    const entry = findEntry(state.date.ms) || state.history[0] || null;
+    const list = [];
+    const seen = {};
+    const push = item => {
+      const key = item.code || item.name;
+      if (!key || seen[key]) return;
+      seen[key] = true;
+      list.push(item);
+    };
+    if (entry && entry.items) {
+      const themes = computeThemes(entry.day.ms);
+      const hot = themes.filter(theme => theme.status !== '退潮').slice(0, 3).map(theme => theme.name);
+      const retreat = entry.stage === '退潮' || entry.stage === '冰点';
+      entry.items.filter(item => (Number(item.continue_day_cnt) || 0) >= 2)
+        .sort((a, b) => (Number(b.continue_day_cnt) || 0) - (Number(a.continue_day_cnt) || 0)).slice(0, 6)
+        .forEach(item => {
+          const reasons = splitReasons(item.limit_up_reason);
+          const main = reasons.filter(name => hot.indexOf(name) >= 0);
+          const id = marketOfThscode(item.thscode);
+          push({ group: '连板晋级候选', name: item.name, code: id.code, market: id.market, type: retreat ? '观察' : '打板',
+            reason: item.continue_day_cnt + '板 · ' + (item.limit_up_reason || '未标注') + (main.length ? ' · 主线' : '') + (retreat ? ' · 情绪' + entry.stage + '期只观察' : ' · 看竞价与换手决定是否接力') });
+        });
+      hot.slice(0, 2).forEach(name => {
+        entry.items.filter(item => (Number(item.continue_day_cnt) || 0) === 1 && splitReasons(item.limit_up_reason).indexOf(name) >= 0)
+          .sort((a, b) => String(a.limit_up_time || '').localeCompare(String(b.limit_up_time || ''))).slice(0, 3)
+          .forEach(item => {
+            const id = marketOfThscode(item.thscode);
+            push({ group: '主线首板', name: item.name, code: id.code, market: id.market, type: retreat ? '观察' : '低吸',
+              reason: name + ' 首板 · 封板 ' + String(item.limit_up_time || '').slice(-5) + (item.seal_money ? ' · 封单 ' + fmtYi(num(item.seal_money)) : '') + ' · 关注次日分歧低吸' });
+          });
+      });
+    }
+    (state.anomalies || []).filter(row => row.signal && row.signal.label === '跟').slice(0, 5).forEach(row => {
+      push({ group: '自选信号', name: row.name, code: row.code, market: row.market, type: '观察', reason: (row.category || '') + ' · ' + row.signal.reason });
+    });
+    const plan = planOf(entry ? entry.day.text : livePlanDate());
+    if (plan) {
+      const bought = (state.reviewRows || []).filter(row => entry && row.date === entry.day.text && row.side === 'buy').map(row => row.code);
+      plan.items.filter(item => item.type !== '观察' && bought.indexOf(item.code) < 0).forEach(item => {
+        push(Object.assign({}, item, { group: '计划延续', source: '次日清单', reason: '今日计划未出手（' + item.type + ' ' + rangeText(item) + '），评估是否延续' }));
+      });
+    }
+    return { entry, list };
+  }
+
+  function renderNextList() {
+    const box = el('next-list');
+    if (!box) return;
+    const { entry, list } = buildNextList();
+    state.nextList = list;
+    const nextDate = nextTradeText(entry ? entry.day.text : todayText());
+    state.nextDate = nextDate;
+    el('next-scope').textContent = (entry ? entry.day.text + ' 收盘生成 · ' : '') + '用于 ' + nextDate;
+    if (!list.length) {
+      box.innerHTML = '';
+      el('next-verdict').innerHTML = '当日数据不足以生成次日关注清单。<span class="sub">需要当日涨停池（情绪温度页签）或盘中异动信号。</span>';
+      hide(el('next-to-plan'));
+      return;
+    }
+    show(el('next-to-plan'));
+    const groups = [];
+    list.forEach(item => { if (groups.indexOf(item.group) < 0) groups.push(item.group); });
+    box.innerHTML = groups.map(group => '<div class="next-group">' + esc(group) + '</div>'
+      + list.map((item, index) => item.group !== group ? '' : '<label class="next-item"><input type="checkbox" data-next="' + index + '"' + (group === '连板晋级候选' && index < 3 || group === '计划延续' ? ' checked' : '') + '>'
+        + '<span class="nn">' + esc(item.name) + '</span><span class="muted">' + esc(item.code || '') + '</span>'
+        + '<span class="st">' + esc(item.type) + '</span><span class="nr">' + esc(item.reason) + '</span></label>').join('')).join('');
+    const hint = nextPositionHint(entry);
+    el('next-verdict').innerHTML = '为 ' + esc(nextDate) + ' 准备了 ' + list.length + ' 只关注标的。'
+      + '<span class="sub">' + (hint ? esc(hint) + '。' : '') + '勾选后加入下一交易日计划，明早在「盘前计划」里补上买入区间与止损价。</span>';
+  }
+
+  function addNextToPlan() {
+    const picked = Array.prototype.map.call(document.querySelectorAll('#next-list input[data-next]:checked'), input => state.nextList[Number(input.dataset.next)]).filter(Boolean);
+    if (!picked.length) { el('next-note').textContent = '请先勾选标的。'; return; }
+    const date = state.nextDate || nextTradeText(todayText());
+    const plan = ensurePlan(date);
+    let added = 0;
+    picked.forEach(item => {
+      if (plan.items.some(existing => existing.code && existing.code === item.code)) return;
+      plan.items.push({
+        id: 'p-' + Date.now() + '-' + added, name: item.name, code: item.code, market: item.market || '',
+        type: item.type || '观察', low: item.low == null ? null : item.low, high: item.high == null ? null : item.high,
+        stop: item.stop == null ? null : item.stop, pos: item.pos || 0, logic: item.reason, source: '次日清单'
+      });
+      added++;
+    });
+    if (!plan.rule) {
+      const summary = state.reviewSummary || store.get('scs.review.summary', null);
+      if (summary && summary.worstBias && BIAS_ADVICE[summary.worstBias.id]) plan.rule = BIAS_ADVICE[summary.worstBias.id];
+    }
+    plan.updatedAt = new Date().toISOString();
+    savePlans();
+    el('next-note').textContent = '已加入 ' + date + ' 计划 ' + added + ' 只' + (picked.length > added ? '（' + (picked.length - added) + ' 只已在计划中）' : '') + '。';
+    state.planDate = date;
+    renderPlan();
+  }
+
+  /* ---------------- 复盘日志 ---------------- */
+
+  function buildLogMarkdown() {
+    const entry = findEntry(state.date.ms) || state.history[0] || null;
+    const date = entry ? entry.day.text : todayText();
+    const lines = ['# 短线复盘日志 ' + date, ''];
+    lines.push('## 一、市场情绪');
+    if (entry && entry.score != null) {
+      lines.push('- 情绪阶段：**' + (entry.stage || '待判定') + '**（综合情绪分 ' + entry.score + '）');
+      lines.push('- 涨停 ' + entry.limitUpTotal + ' 家 / 跌停 ' + entry.limitDownTotal + ' 家 / 炸板率 ' + (entry.brokRate == null ? '--' : (entry.brokRate * 100).toFixed(1) + '%') + ' / 连板最高 ' + entry.maxBoard + ' 板 / 成交额 ' + fmtYi(entry.amount));
+      const themes = computeThemes(entry.day.ms).slice(0, 3);
+      if (themes.length) lines.push('- 主线题材：' + themes.map(theme => theme.name + '（' + theme.today + '家，连续' + theme.streak + '日，' + theme.status + '）').join('；'));
+    } else lines.push('- 当日情绪数据暂不可用');
+    if (state.overseas) lines.push('- 隔夜外盘：' + state.overseas);
+    lines.push('');
+    lines.push('## 二、我的交易');
+    const pairs = state.pairs || [];
+    const today = pairs.filter(pair => pair.sellDate === date);
+    if (today.length) {
+      today.forEach(pair => lines.push('- ' + pair.name + '：' + pair.buyDate + ' 买 ' + fmtPrice(pair.buyPrice) + ' → ' + pair.sellDate + ' 卖 ' + fmtPrice(pair.sellPrice) + '，' + fmtSignedYi(pair.profit)));
+    } else lines.push('- 当日无平仓交易');
+    if (pairs.length) {
+      const total = pairs.reduce((sum, pair) => sum + pair.profit, 0);
+      lines.push('- 交割单累计：' + pairs.length + ' 笔平仓，合计 ' + fmtSignedYi(total) + '，胜率 ' + (pairs.filter(pair => pair.profit > 0).length / pairs.length * 100).toFixed(0) + '%');
+    }
+    const exec = state.execution;
+    if (exec) lines.push('- 计划执行率 ' + exec.adherence.toFixed(0) + '%；计划内 ' + exec.inside.count + ' 笔 ' + fmtSignedYi(exec.inside.profit) + '，计划外 ' + exec.outside.count + ' 笔 ' + fmtSignedYi(exec.outside.profit) + '；止损不坚决 ' + exec.stopMiss + ' 笔');
+    lines.push('');
+    const biases = (state.biases || []).filter(item => item.count > 0);
+    lines.push('## 三、行为偏差');
+    if (biases.length) biases.slice(0, 4).forEach(item => lines.push('- ' + item.name + ' ' + item.count + ' 次，影响 ' + fmtSignedYi(item.loss)));
+    else lines.push('- 未命中行为偏差');
+    lines.push('');
+    lines.push('## 四、改进建议');
+    const advice = state.reviewSummary && state.reviewSummary.advice ? state.reviewSummary.advice : [];
+    (advice.length ? advice : ['导入交割单后生成']).forEach((text, index) => lines.push((index + 1) + '. ' + text));
+    lines.push('');
+    lines.push('## 五、次日关注清单（' + (state.nextDate || nextTradeText(date)) + '）');
+    const hint = nextPositionHint(entry);
+    if (hint) lines.push('- ' + hint);
+    (state.nextList || []).slice(0, 12).forEach(item => lines.push('- [' + item.group + '] ' + item.name + (item.code ? '（' + item.code + '）' : '') + '：' + item.reason));
+    if (!(state.nextList || []).length) lines.push('- 暂无');
+    const note = el('journal-note') ? el('journal-note').value.trim() : '';
+    lines.push('');
+    lines.push('## 六、今日心得');
+    lines.push(note || '（未填写）');
+    lines.push('');
+    lines.push('> 由「短线交易闭环作战台」生成，数据仅作复盘记录，不构成投资建议。');
+    return lines.join('\n');
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text);
+    return new Promise((resolve, reject) => {
+      const area = document.createElement('textarea');
+      area.value = text;
+      area.style.position = 'fixed'; area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.select();
+      try { document.execCommand('copy') ? resolve() : reject(new Error('复制命令不可用')); }
+      catch (error) { reject(error); }
+      finally { document.body.removeChild(area); }
+    });
+  }
+
+  /* ---------------- 示例交割单 ---------------- */
+
+  function staticSample() {
+    return { rows: convertBlotter(SAMPLE_BLOTTER), source: '内置示例交割单', sample: true };
+  }
+
+  async function buildSample() {
+    const days = state.days.slice(0, 8);
+    if (days.length < 8) return null;
+    const codes = [];
+    SAMPLE_TEMPLATE.concat(SAMPLE_PLAN_TEMPLATE).forEach(row => { if (codes.indexOf(row.code) < 0) codes.push(row.code); });
+    let search = null;
+    try { search = await searchAShare(codes); } catch (error) { warn('示例标的检索失败', error); return null; }
+    const records = (search && search.records) || [];
+    const closes = {};
+    await mapLimit(codes, 4, async code => {
+      const matched = records.filter(record => record && String(record.code) === code && record.market);
+      if (matched.length !== 1) return;
+      try {
+        const payload = await hub(requestDataHubPricesHistorical({ thscode: thscodeOf(matched[0].market, code), interval: '1d', start: days[7].ms - 3 * 86400000, end: days[0].ms + 6 * 3600000 }));
+        closes[code] = {};
+        (payload.item || []).forEach(row => { const close = num(row.close_price); if (close != null) closes[code][dayText(Number(row.date_ms))] = close; });
+      } catch (error) { warn('示例标的日线读取失败 ' + code, error); }
+    });
+    const closeOf = (code, d) => closes[code] ? closes[code][days[d].text] : null;
+    const round2 = value => Math.round(value * 100) / 100;
+    const rows = [];
+    for (const row of SAMPLE_TEMPLATE) {
+      const close = closeOf(row.code, row.d);
+      if (close == null) return null;
+      const price = round2(close * row.f);
+      rows.push({ date: days[row.d].text, time: row.t, code: row.code, name: row.name, side: row.side, price, qty: row.qty, amount: round2(price * row.qty) });
+    }
+    const plans = {};
+    SAMPLE_PLAN_TEMPLATE.forEach(item => {
+      const close = closeOf(item.code, item.d);
+      const date = days[item.d].text;
+      plans[date] = plans[date] || { items: [], rule: SAMPLE_RULES[item.d] || '', sample: true };
+      plans[date].items.push({
+        id: 'sample-' + item.d + '-' + item.code, name: item.name, code: item.code, market: '', type: item.type,
+        low: item.low == null || close == null ? null : round2(close * item.low), high: item.high == null || close == null ? null : round2(close * item.high),
+        stop: item.stop == null || close == null ? null : round2(close * item.stop), pos: item.pos, logic: item.logic, source: '示例'
+      });
+    });
+    return { rows, plans };
+  }
+
+  async function loadSample() {
+    const built = await buildSample().catch(error => { warn('生成示例交割单失败', error); return null; });
+    if (built) {
+      state.review = { rows: built.rows, source: '内置示例交割单（按最近交易日真实收盘价生成）', sample: true };
+      state.samplePlans = built.plans;
+    } else {
+      state.review = staticSample();
+      state.samplePlans = {};
+    }
+    renderBlotter();
   }
 
   /* ---------------- 顶栏 ---------------- */
@@ -2086,6 +3015,10 @@
     if (!entry) setLoadState('暂无数据'); else setLoadState('');
     renderBar(entry);
     renderEmotion();
+    renderPlan();
+    renderNextList();
+    const noteInput = el('journal-note');
+    if (noteInput && entry) noteInput.value = store.get('scs.journal.notes', {})[entry.day.text] || '';
     await loadCurrentExtras(entry);
     if (generation !== state.generation) return;
   }
@@ -2108,8 +3041,11 @@
     renderWatchGroups();
     await loadWatchQuotes();
     renderWatchGroups();
+    renderPlanWatch();
     detectAnomalies();
     renderAnomalies();
+    state.intradayAt = clockText();
+    renderLoop();
     await attributeAnomalies();
     renderAnomalies();
   }
@@ -2130,6 +3066,7 @@
     buildDateSelect();
     await loadStaticParts();
     await loadAll();
+    if (state.review && state.review.sample) await loadSample();
     const hour = new Date().getHours();
     const minute = new Date().getMinutes();
     const clock = hour * 60 + minute;
@@ -2154,6 +3091,14 @@
   document.addEventListener('click', event => {
     const paneTab = event.target.closest ? event.target.closest('.tab[data-pane]') : null;
     if (paneTab) { activatePane(paneTab.dataset.pane); return; }
+    const step = event.target.closest ? event.target.closest('.step[data-goto]') : null;
+    if (step) { activatePane(step.dataset.goto); return; }
+    const planDel = event.target.closest ? event.target.closest('[data-plan-del]') : null;
+    if (planDel) {
+      const plan = planOf(state.planDate);
+      if (plan) { plan.items.splice(Number(planDel.dataset.planDel), 1); savePlans(); renderPlan(); }
+      return;
+    }
     const periodTab = event.target.closest ? event.target.closest('.tab[data-period]') : null;
     if (periodTab) {
       state.period = periodTab.dataset.period;
@@ -2180,6 +3125,43 @@
   el('reload').addEventListener('click', () => loadAll().catch(error => warn('刷新失败', error)));
   el('date-sel').addEventListener('change', event => selectDay(Number(event.target.value)));
   el('rule-add').addEventListener('click', addRule);
+  el('plan-add').addEventListener('click', () => addPlanItem().catch(error => warn('加入计划失败', error)));
+  el('plan-stock').addEventListener('keydown', event => { if (event.key === 'Enter') addPlanItem().catch(error => warn('加入计划失败', error)); });
+  el('plan-date').addEventListener('change', event => { if (event.target.value) { state.planDate = event.target.value; renderPlan(); } });
+  el('plan-rule').addEventListener('change', event => {
+    const plan = ensurePlan(state.planDate || planDefaultDate());
+    plan.rule = event.target.value.trim();
+    savePlans();
+    renderPlan();
+  });
+  el('next-to-plan').addEventListener('click', addNextToPlan);
+  el('journal-note').addEventListener('change', event => {
+    const notes = store.get('scs.journal.notes', {});
+    notes[(findEntry(state.date.ms) || { day: { text: todayText() } }).day.text] = event.target.value.trim();
+    store.set('scs.journal.notes', notes);
+  });
+  el('log-copy').addEventListener('click', () => {
+    copyText(buildLogMarkdown())
+      .then(() => { el('log-note').textContent = '已复制，可直接粘贴到笔记、社区帖子或发给 AI 继续追问。'; })
+      .catch(() => { el('log-note').textContent = '当前环境不支持自动复制，已展开预览，请手动全选复制。'; el('log-preview').textContent = buildLogMarkdown(); show(el('log-preview')); });
+  });
+  el('log-download').addEventListener('click', () => {
+    try {
+      const blob = new Blob([buildLogMarkdown()], { type: 'text/markdown;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = '短线复盘日志-' + ((findEntry(state.date.ms) || { day: { text: todayText() } }).day.text) + '.md';
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => { URL.revokeObjectURL(link.href); document.body.removeChild(link); }, 0);
+      el('log-note').textContent = '已生成 Markdown 文件。';
+    } catch (error) { warn('下载复盘日志失败', error); el('log-note').textContent = '当前环境不支持下载，请用「一键复制」。'; }
+  });
+  el('log-toggle').addEventListener('click', () => {
+    const box = el('log-preview');
+    if (box.hidden) { box.textContent = buildLogMarkdown(); show(box); el('log-toggle').textContent = '收起预览'; }
+    else { hide(box); el('log-toggle').textContent = '预览日志'; }
+  });
   el('rule-reset').addEventListener('click', () => { state.rules = DEFAULT_RULES.slice(); saveRules(); renderRules(); renderMap(); });
   el('thr-save').addEventListener('click', () => {
     store.set('scs.anomaly.thresholds', {
@@ -2216,7 +3198,7 @@
     reader.onload = () => {
       const rows = convertBlotter(String(reader.result || ''));
       if (!rows.length) { warn('交割单解析失败'); return; }
-      state.review = { rows, source: file.name };
+      state.review = { rows, source: file.name, sample: false };
       store.set('scs.blotter.rows', rows);
       store.set('scs.blotter.source', file.name);
       renderBlotter();
@@ -2225,16 +3207,11 @@
     reader.readAsText(file);
   });
   el('blotter-sample').addEventListener('click', () => {
-    const rows = convertBlotter(SAMPLE_BLOTTER);
-    state.review = { rows, source: '内置示例交割单' };
-    renderBlotter();
-    runReview().catch(error => warn('复盘计算失败', error));
+    loadSample().then(runReview).catch(error => warn('复盘计算失败', error));
   });
   el('blotter-clear').addEventListener('click', () => {
     store.set('scs.blotter.rows', []);
-    state.review = { rows: convertBlotter(SAMPLE_BLOTTER), source: '内置示例交割单' };
-    renderBlotter();
-    runReview().catch(error => warn('复盘计算失败', error));
+    loadSample().then(runReview).catch(error => warn('复盘计算失败', error));
   });
 
   function renderBlotter() {
@@ -2255,14 +3232,14 @@
   try {
     watchTheme();
     loadRules(); renderRules(); fillThresholds(); syncDiscipline();
+    loadPlans(); renderPlan();
     const savedRows = store.get('scs.blotter.rows', null);
     if (Array.isArray(savedRows) && savedRows.length) {
-      state.review = { rows: savedRows, source: store.get('scs.blotter.source', '上次导入的交割单') };
-      renderBlotter();
+      state.review = { rows: savedRows, source: store.get('scs.blotter.source', '上次导入的交割单'), sample: false };
     } else {
-      state.review = { rows: convertBlotter(SAMPLE_BLOTTER), source: '内置示例交割单' };
-      renderBlotter();
+      state.review = staticSample();
     }
+    renderBlotter();
     initialize().catch(error => { warn('初始化失败', error); setLoadState('加载失败，请重试'); });
   } catch (error) {
     warn('页面初始化失败', error);
