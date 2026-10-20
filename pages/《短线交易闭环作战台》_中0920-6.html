@@ -306,7 +306,7 @@
     exportJSON:() => JSON.stringify(snapshot(),null,2),
     dispose:() => {global.clearTimeout(timer);global.removeEventListener?.('error',onError);global.removeEventListener?.('unhandledrejection',onRejection);}});
   record({stage:'boot',status:'start'});
-})(globalThis,"5ac18557ca2e227a34afee606193033a3f41bd909a94d693fbe7eac3ca250b33");</script>
+})(globalThis,"8191d0c60098d44c84d6aa16716e3266c62e92b8cb899495ea12036241a89dd6");</script>
 <script data-lumi-capabilities>
 (function(global){'use strict';
 const definitions={"lumi/data-view":function(module,exports,require){
@@ -3544,6 +3544,18 @@ global.LumiCapabilities=Object.freeze({require:load,modules:Object.freeze(Object
             </div>
           </div>
         </section>
+        <section class="card span12" id="m-check">
+          <div class="card-h"><span class="card-t">情绪阶段有效性自检</span><span class="card-s" id="check-scope">用历史数据检验各阶段对次日的区分度</span></div>
+          <div class="card-b">
+            <div class="verdict" id="check-verdict">正在统计各阶段次日表现…</div>
+            <div class="scroll-y">
+              <table class="tbl">
+                <thead><tr><th>阶段</th><th class="num">样本天数</th><th class="num">次日涨停家数变化</th><th class="num">次日连板晋级率</th><th class="num">昨日涨停次日平均涨幅</th></tr></thead>
+                <tbody id="check-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
         <section class="card span12" id="m-ladder">
           <div class="card-h"><span class="card-t">连板梯队</span><span class="card-s" id="ladder-scope"></span></div>
           <div class="card-b">
@@ -3946,6 +3958,8 @@ global.LumiCapabilities=Object.freeze({require:load,modules:Object.freeze(Object
     days: [],
     date: { ms: null, text: '' },
     history: [],
+    extHistory: null,
+    extLoading: false,
     ext: {},
     rules: [],
     ladder: null,
@@ -4096,24 +4110,45 @@ global.LumiCapabilities=Object.freeze({require:load,modules:Object.freeze(Object
 
   /* ---------------- 情绪数据 ---------------- */
 
-  async function loadDayEmotion(day) {
+  const LIMIT_POOL_PAGE_SIZE = 60;
+  const LIMIT_POOL_MAX_PAGES = 5;
+
+  async function loadDayEmotion(day, fullPages) {
+    const fetchLimitUp = page => hub(requestDataHubDatahubLimitUpPool({ date_ms: day.ms, page, size: LIMIT_POOL_PAGE_SIZE, sort_field: 'continue_day_cnt', sort_dir: 'desc' }));
     const [up, down, brk] = await Promise.all([
-      hub(requestDataHubDatahubLimitUpPool({ date_ms: day.ms, page: 1, size: 60, sort_field: 'continue_day_cnt', sort_dir: 'desc' })),
+      fetchLimitUp(1),
       hub(requestDataHubDatahubLimitDownPool({ date_ms: day.ms, page: 1, size: 1, sort_field: 'price_change_ratio_pct', sort_dir: 'asc' })),
       hub(requestDataHubDatahubLimitBreakPool({ date_ms: day.ms, page: 1, size: 1, sort_field: 'open_times', sort_dir: 'desc' }))
     ]);
     const items = (up.item || []).filter(Boolean);
+    const poolTotal = Number((up.pagination && up.pagination.total) || items.length);
+    let truncated = false;
+    if (fullPages && poolTotal > items.length) {
+      const lastPage = Math.min(LIMIT_POOL_MAX_PAGES, Math.ceil(poolTotal / LIMIT_POOL_PAGE_SIZE));
+      const pages = [];
+      for (let page = 2; page <= lastPage; page++) pages.push(fetchLimitUp(page));
+      const extras = await Promise.all(pages.map(promise => promise.catch(error => { warn('涨停池翻页读取失败 ' + day.text, error); return null; })));
+      const seen = {};
+      items.forEach(item => { seen[item.thscode] = true; });
+      extras.forEach(payload => {
+        if (!payload) { truncated = true; return; }
+        (payload.item || []).filter(Boolean).forEach(item => {
+          if (!seen[item.thscode]) { seen[item.thscode] = true; items.push(item); }
+        });
+      });
+      if (items.length < poolTotal) truncated = true;
+    }
     const maxBoard = items.reduce((max, item) => Math.max(max, Number(item.continue_day_cnt) || 0), 0);
     const buckets = {};
     items.forEach(item => {
       const level = Number(item.continue_day_cnt) || 1;
       buckets[level] = (buckets[level] || 0) + 1;
     });
-    const limitUpTotal = Number((up.pagination && up.pagination.total) || items.length);
+    const limitUpTotal = poolTotal;
     const limitDownTotal = Number((down.pagination && down.pagination.total) || (down.item || []).length);
     const breakTotal = Number((brk.pagination && brk.pagination.total) || (brk.item || []).length);
     const sealRate = (limitUpTotal + breakTotal) > 0 ? limitUpTotal / (limitUpTotal + breakTotal) : null;
-    return { day, items, buckets, maxBoard, limitUpTotal, limitDownTotal, breakTotal, sealRate, amount: null, score: null, stage: null };
+    return { day, items, buckets, maxBoard, limitUpTotal, limitDownTotal, breakTotal, sealRate, amount: null, score: null, stage: null, poolFull: !!fullPages, poolTruncated: truncated };
   }
 
   async function loadAmountSeries(days) {
@@ -4177,7 +4212,7 @@ global.LumiCapabilities=Object.freeze({require:load,modules:Object.freeze(Object
   }
 
   async function loadEmotion(historyDays) {
-    const entries = await mapLimit(historyDays, 4, day => loadDayEmotion(day).catch(error => { warn('情绪数据读取失败 ' + day.text, error); return null; }));
+    const entries = await mapLimit(historyDays, 4, (day, index) => loadDayEmotion(day, index < 5).catch(error => { warn('情绪数据读取失败 ' + day.text, error); return null; }));
     const valid = entries.filter(Boolean);
     const amountSeries = await loadAmountSeries(historyDays);
     valid.forEach(entry => computeScore(entry, amountSeries));
@@ -4665,6 +4700,12 @@ global.LumiCapabilities=Object.freeze({require:load,modules:Object.freeze(Object
 
   /* ---------------- 主线题材 ---------------- */
 
+  function poolScopeText(entry) {
+    if (entry.poolFull && entry.poolTruncated) return '（前 ' + entry.items.length + ' 家，超出部分未计入）';
+    if (entry.poolFull) return '（全量 ' + entry.limitUpTotal + ' 家）';
+    return '（按连板数排序的前 ' + entry.items.length + ' 家）';
+  }
+
   function splitReasons(text) {
     const out = [];
     String(text || '').split(/[+＋、，,;；\/|]/).forEach(part => {
@@ -4735,8 +4776,153 @@ global.LumiCapabilities=Object.freeze({require:load,modules:Object.freeze(Object
     el('theme-verdict').innerHTML = (main
       ? '主线是「' + esc(main.name) + '」：已连续 ' + main.streak + ' 日涨停 2 家以上，当日 ' + main.today + ' 家，龙头 ' + esc(main.leader ? main.leader.name : '--') + '。'
       : '当日没有连续 3 日以上的主线，题材以轮动为主，优先做最强分支的确定性。')
-      + '<span class="sub">' + (fresh.length ? '新发酵方向：' + esc(fresh.join('、')) + '。' : '') + '题材来自涨停原因拆分统计，样本为当日涨停池（按连板数排序的前 60 只）。</span>';
+      + '<span class="sub">' + (fresh.length ? '新发酵方向：' + esc(fresh.join('、')) + '。' : '') + '题材来自涨停原因拆分统计，样本为当日涨停池' + poolScopeText(entry) + '。</span>';
     el('theme-scope').textContent = entry.day.text;
+  }
+
+  /* ---------------- 阶段有效性自检 ---------------- */
+
+  const STAGE_ORDER = ['高潮', '发酵', '分歧', '修复', '退潮', '冰点'];
+
+  function selfCheckSource() { return state.extHistory || state.history; }
+
+  function selfCheckPairs() {
+    const source = selfCheckSource();
+    const byMs = {};
+    source.forEach(entry => { byMs[entry.day.ms] = entry; });
+    const pairs = [];
+    state.days.forEach((day, index) => {
+      if (!index) return;
+      const t = byMs[day.ms];
+      const t1 = byMs[state.days[index - 1].ms];
+      if (t && t.stage && t.items && t1 && t1.items) pairs.push({ t, t1 });
+    });
+    return pairs;
+  }
+
+  function selfCheckGroups() {
+    const groups = {};
+    selfCheckPairs().forEach(pair => {
+      const g = groups[pair.t.stage] || (groups[pair.t.stage] = { stage: pair.t.stage, days: 0, diffSum: 0, diffN: 0, promote: 0, promoteBase: 0, premiumSum: 0, premiumN: 0 });
+      g.days += 1;
+      if (pair.t.limitUpTotal != null && pair.t1.limitUpTotal != null) { g.diffSum += pair.t1.limitUpTotal - pair.t.limitUpTotal; g.diffN += 1; }
+      if (pair.t.items.length) {
+        const nextCodes = {};
+        pair.t1.items.forEach(item => { if (item.thscode) nextCodes[item.thscode] = true; });
+        g.promoteBase += pair.t.items.length;
+        g.promote += pair.t.items.filter(item => item.thscode && nextCodes[item.thscode]).length;
+      }
+      if (pair.t.premiumN) { g.premiumSum += pair.t.premiumSum; g.premiumN += pair.t.premiumN; }
+    });
+    return STAGE_ORDER.map(name => groups[name]).filter(Boolean);
+  }
+
+  function mergedGroup(groups, names) {
+    const out = { days: 0, promote: 0, promoteBase: 0 };
+    groups.forEach(g => { if (names.indexOf(g.stage) >= 0) { out.days += g.days; out.promote += g.promote; out.promoteBase += g.promoteBase; } });
+    return out;
+  }
+
+  function selfCheckVerdict(groups) {
+    const hot = mergedGroup(groups, ['高潮', '发酵']);
+    const cold = mergedGroup(groups, ['退潮', '冰点']);
+    const rHot = hot.promoteBase >= 30 ? hot.promote / hot.promoteBase * 100 : null;
+    const rCold = cold.promoteBase >= 30 ? cold.promote / cold.promoteBase * 100 : null;
+    if (rHot != null && rCold != null) {
+      const gap = rHot - rCold;
+      return '近 ' + selfCheckSource().length + ' 个交易日样本：「高潮/发酵」期次日连板晋级率 ' + rHot.toFixed(1) + '%，「退潮/冰点」期 ' + rCold.toFixed(1) + '%，相差 ' + (gap >= 0 ? '+' : '') + gap.toFixed(1) + ' 个百分点'
+        + (gap > 2 ? '，阶段判断对次日行情有实际区分度。' : gap > 0 ? '，阶段判断有一定区分度，但优势有限。' : '，当前样本下区分度不明显，请谨慎参考。');
+    }
+    return '样本积累中：各阶段样本满 3 天后自动给出区分度结论。';
+  }
+
+  function renderStageSelfCheck() {
+    const body = el('check-body');
+    if (!body) return;
+    const groups = selfCheckGroups();
+    const source = selfCheckSource();
+    const pending = source.filter(entry => entry.stage && entry.premiumPending).length;
+    el('check-scope').textContent = source.length + ' 个交易日样本' + (state.extLoading ? '，正在扩展到 60 日…' : pending ? '，溢价列统计中…' : '');
+    body.innerHTML = groups.map(g => {
+      const diffAvg = g.diffN ? g.diffSum / g.diffN : null;
+      const rate = g.promoteBase ? g.promote / g.promoteBase * 100 : null;
+      const premium = g.premiumN ? g.premiumSum / g.premiumN : null;
+      const sampleNote = g.days < 3 ? '<div class="sub">样本不足</div>' : '';
+      return '<tr><td><b>' + esc(g.stage) + '</b>' + sampleNote + '</td>'
+        + '<td class="num">' + g.days + '</td>'
+        + '<td class="num">' + (diffAvg == null ? '--' : (diffAvg >= 0 ? '+' : '') + diffAvg.toFixed(1) + ' 家') + '</td>'
+        + '<td class="num">' + (rate == null ? '--' : rate.toFixed(1) + '%') + '</td>'
+        + '<td class="num">' + (premium == null ? '--' : (premium >= 0 ? '+' : '') + premium.toFixed(2) + '%') + '</td></tr>';
+    }).join('') || '<tr><td colspan="5">样本积累中</td></tr>';
+    el('check-verdict').textContent = selfCheckVerdict(groups);
+  }
+
+  async function extendHistory() {
+    if (state.extLoading || state.extHistory) { renderStageSelfCheck(); return; }
+    const days = state.days.slice(0, 60);
+    if (days.length <= state.history.length) { renderStageSelfCheck(); return; }
+    state.extLoading = true;
+    renderStageSelfCheck();
+    try {
+      const have = {};
+      state.history.forEach(entry => { have[entry.day.ms] = true; });
+      const more = days.filter(day => !have[day.ms]);
+      const entries = await mapLimit(more, 4, day => loadDayEmotion(day, false).catch(error => { warn('历史情绪扩展读取失败 ' + day.text, error); return null; }));
+      const valid = entries.filter(Boolean);
+      const amountSeries = await loadAmountSeries(days);
+      const all = state.history.concat(valid);
+      all.forEach(entry => { if (entry.score == null) computeScore(entry, amountSeries); });
+      const asc = all.slice().sort((a, b) => a.day.ms - b.day.ms);
+      asc.forEach((entry, index) => {
+        const stage = stageOf(entry, index > 0 ? asc[index - 1] : null);
+        entry.stage = stage.name;
+        entry.stageBasis = stage.basis;
+      });
+      state.extHistory = asc.slice().reverse();
+    } finally {
+      state.extLoading = false;
+      renderStageSelfCheck();
+    }
+  }
+
+  async function loadPremiumHistory() {
+    const pairs = selfCheckPairs().slice(0, 20);
+    const byStock = {};
+    let pendingDays = 0;
+    pairs.forEach(pair => {
+      if (pair.t.premiumN) return;
+      pair.t.premiumPending = true;
+      pendingDays += 1;
+      pair.t.items.slice(0, 40).forEach(item => {
+        if (!item.thscode) return;
+        const list = byStock[item.thscode] || (byStock[item.thscode] = []);
+        list.push(pair);
+      });
+    });
+    if (!pendingDays) { renderStageSelfCheck(); return; }
+    const stocks = Object.keys(byStock);
+    let done = 0;
+    await mapLimit(stocks, 4, async thscode => {
+      const list = byStock[thscode];
+      let start = list[0].t.day.ms, end = list[0].t1.day.ms;
+      list.forEach(pair => { start = Math.min(start, pair.t.day.ms); end = Math.max(end, pair.t1.day.ms); });
+      try {
+        const payload = await hub(requestDataHubPricesHistorical({ thscode, interval: '1d', start: start - 86400000, end: end + 86400000 }));
+        const closes = {};
+        (payload.item || []).forEach(row => {
+          const ms = Number(row.date_ms), close = num(row.close_price);
+          if (ms && close > 0) closes[ms] = close;
+        });
+        list.forEach(pair => {
+          const c0 = closes[pair.t.day.ms], c1 = closes[pair.t1.day.ms];
+          if (c0 && c1) { pair.t.premiumSum = (pair.t.premiumSum || 0) + (c1 / c0 - 1) * 100; pair.t.premiumN = (pair.t.premiumN || 0) + 1; }
+        });
+      } catch (error) { /* 样本缺失不阻塞其余统计 */ }
+      done += 1;
+      if (done % 40 === 0 || done === stocks.length) renderStageSelfCheck();
+    });
+    selfCheckSource().forEach(entry => { entry.premiumPending = false; });
+    renderStageSelfCheck();
   }
 
   /* ---------------- 情绪渲染 ---------------- */
@@ -6121,7 +6307,7 @@ global.LumiCapabilities=Object.freeze({require:load,modules:Object.freeze(Object
     if (cached) return cached;
     const day = state.days.find(item => item.ms === ms);
     if (!day) return null;
-    const fetched = await loadDayEmotion(day).catch(error => { warn('读取当日情绪失败 ' + day.text, error); return null; });
+    const fetched = await loadDayEmotion(day, true).catch(error => { warn('读取当日情绪失败 ' + day.text, error); return null; });
     if (!fetched) return null;
     const amountSeries = await loadAmountSeries([day]);
     computeScore(fetched, amountSeries);
@@ -6151,6 +6337,7 @@ global.LumiCapabilities=Object.freeze({require:load,modules:Object.freeze(Object
       if (generation !== state.generation) return;
       state.history = history;
       state.historyCache = { key: historyDays.map(item => item.ms).join(','), value: history };
+      state.extHistory = null;
     } else {
       state.history = history;
     }
@@ -6166,6 +6353,8 @@ global.LumiCapabilities=Object.freeze({require:load,modules:Object.freeze(Object
     if (noteInput && entry) noteInput.value = store.get('scs.journal.notes', {})[entry.day.text] || '';
     await loadCurrentExtras(entry);
     if (generation !== state.generation) return;
+    renderStageSelfCheck();
+    extendHistory().then(() => loadPremiumHistory()).catch(error => warn('阶段自检统计失败', error));
   }
 
   function activatePane(name) {
